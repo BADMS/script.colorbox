@@ -49,8 +49,9 @@ class ColorBoxMain:
                 self.show_watched = xbmc.getInfoLabel("ListItem.Property(WatchedEpisodes)")
                 Show_Percentage()
             self.prefix_now_NINE = HOME.getProperty("NINE_manual_set")
-            if not self.prefix_now_NINE == '' and self.prefix_now_NINE != self.prefix_prev_NINE:
+            if self.prefix_now_NINE != '' and self.prefix_now_NINE != self.prefix_prev_NINE:
                 try:
+                    HOME.setProperty('Daemon_NINE_ImageUpdating', '0')
                     self.prefix_prev_NINE = self.prefix_now_NINE
                     for arg in self.prefix_now_NINE.strip().split(','):
                         arg = arg.replace("'\"", "").replace("\"'", "")
@@ -62,7 +63,6 @@ class ColorBoxMain:
                             self.prefix = arg[7:]
                             if not self.prefix.endswith("."):
                                 self.prefix = self.prefix + "."
-                    HOME.setProperty('Daemon_NINE_ImageUpdating', '0')
                     HOME.setProperty(self.prefix + "ImageFilterNINE", ColorBox_function_map[self.info](self.id))
                     HOME.setProperty(self.prefix + "ImageNINE", self.id)
                     HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
@@ -76,10 +76,10 @@ class ColorBoxMain:
                 self.image_now_FIVE = xbmc.getInfoLabel("Control.GetLabel(7975)")
                 if self.image_now_FIVE != self.image_prev_FIVE and self.image_now_FIVE != "":
                     try:
+                        HOME.setProperty('Daemon_FIVE_ImageUpdating', '0')
                         self.image_prev_FIVE = self.image_now_FIVE
                         HOME.setProperty("OldImageColorFIVE", HOME.getProperty("ImageColorFIVE"))
                         HOME.setProperty("OldImageCColorFIVE", HOME.getProperty("ImageCColorFIVE"))
-                        HOME.setProperty('Daemon_FIVE_ImageUpdating', '0')
                         HOME.setProperty('ImageFilterFIVE', ColorBox_function_map[FIVE_daemon_set](self.image_now_FIVE))
                         HOME.setProperty('ImageFIVE', self.image_now_FIVE)
                         HOME.setProperty('Daemon_FIVE_ImageUpdating', '1')
@@ -93,10 +93,10 @@ class ColorBoxMain:
                 self.image_now_cfa = xbmc.getInfoLabel("ListItem.Art(fanart)")
                 if self.image_now_cfa != self.image_prev_cfa and self.image_now_cfa != "":
                     try:
+                        HOME.setProperty('DaemonFanartImageUpdating', '0')
                         self.image_prev_cfa = self.image_now_cfa
                         HOME.setProperty("OldImageColorcfa", HOME.getProperty("ImageColorcfa"))
                         HOME.setProperty("OldImageCColorcfa", HOME.getProperty("ImageCColorcfa"))
-                        HOME.setProperty('DaemonFanartImageUpdating', '0')
                         HOME.setProperty('ImageFiltercfa', ColorBox_function_map[cfa_daemon_set](self.image_now_cfa))
                         HOME.setProperty('DaemonFanartImageUpdating', '1')
                         tf = Thread(target=Color_Only, args=(self.image_now_cfa, "ImageColorcfa", "ImageCColorcfa"))
@@ -118,10 +118,10 @@ class ColorBoxMain:
                 self.image_now_EIGHT = xbmc.getInfoLabel("Control.GetLabel(7978)")
                 if self.image_now_EIGHT != self.image_prev_EIGHT and self.image_now_EIGHT != "":
                     try:
+                        HOME.setProperty('Daemon_EIGHT_ImageUpdating', '0')
                         self.image_prev_EIGHT = self.image_now_EIGHT
                         HOME.setProperty("OldImageColorEIGHT", HOME.getProperty("ImageColorEIGHT"))
                         HOME.setProperty("OldImageCColorEIGHT", HOME.getProperty("ImageCColorEIGHT"))
-                        HOME.setProperty('Daemon_EIGHT_ImageUpdating', '0')
                         HOME.setProperty('ImageFilterEIGHT', ColorBox_function_map[EIGHT_daemon_set](self.image_now_EIGHT))
                         HOME.setProperty('ImageEIGHT', self.image_now_EIGHT)
                         HOME.setProperty('Daemon_EIGHT_ImageUpdating', '1')
@@ -140,26 +140,26 @@ class ColorBoxMain:
                 Show_Percentage()
 
     def _init_vars(self):
-        HOME.setProperty("OldImageColorFIVE", "FF000000")
+        HOME.setProperty("OldImageColorFIVE", "FFffffff")
         HOME.setProperty("ImageColorFIVE", "FFffffff")
-        HOME.setProperty("OldImageCColorFIVE", "FF000000")
-        HOME.setProperty("ImageCColorFIVE", "FF000000")
-        HOME.setProperty("OldImageColorcfa", "FF000000")
-        HOME.setProperty("ImageColorcfa", "FF000000")
-        HOME.setProperty("OldImageCColorcfa", "FF000000")
-        HOME.setProperty("ImageCColorcfa", "FF000000")
-        HOME.setProperty("OldImageColorSEVEN", "FF000000")
-        HOME.setProperty("ImageColorSEVEN", "FF000000")
-        HOME.setProperty("OldImageColorEIGHT", "FF000000")
-        HOME.setProperty("ImageColorEIGHT", "FF000000")
-        HOME.setProperty("OldImageColorNINE", "FF000000")
-        HOME.setProperty("ImageColorNINE", "FF000000")
-        HOME.setProperty("OldImageCColorSEVEN", "FF000000")
-        HOME.setProperty("ImageCColorSEVEN", "FF000000")
-        HOME.setProperty("OldImageCColorEIGHT", "FF000000")
-        HOME.setProperty("ImageCColorEIGHT", "FF000000")
-        HOME.setProperty("OldImageCColorNINE", "FF000000")
-        HOME.setProperty("ImageCColorNINE", "FF000000")
+        HOME.setProperty("OldImageCColorFIVE", "FFffffff")
+        HOME.setProperty("ImageCColorFIVE", "FFffffff")
+        HOME.setProperty("OldImageColorcfa", "FFffffff")
+        HOME.setProperty("ImageColorcfa", "FFffffff")
+        HOME.setProperty("OldImageCColorcfa", "FFffffff")
+        HOME.setProperty("ImageCColorcfa", "FFffffff")
+        HOME.setProperty("OldImageColorSEVEN", "FFffffff")
+        HOME.setProperty("ImageColorSEVEN", "FFffffff")
+        HOME.setProperty("OldImageColorEIGHT", "FFffffff")
+        HOME.setProperty("ImageColorEIGHT", "FFffffff")
+        HOME.setProperty("OldImageColorNINE", "FFffffff")
+        HOME.setProperty("ImageColorNINE", "FFffffff")
+        HOME.setProperty("OldImageCColorSEVEN", "FFffffff")
+        HOME.setProperty("ImageCColorSEVEN", "FFffffff")
+        HOME.setProperty("OldImageCColorEIGHT", "FFffffff")
+        HOME.setProperty("ImageCColorEIGHT", "FFffffff")
+        HOME.setProperty("OldImageCColorNINE", "FFffffff")
+        HOME.setProperty("ImageCColorNINE", "FFffffff")
         self.window = xbmcgui.Window(10000)  # Home Window
         self.control = None
         self.id = ""
