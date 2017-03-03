@@ -5,13 +5,13 @@ import xbmcaddon
 import xbmcvfs
 from threading import Thread
 
-ADDON = xbmcaddon.Addon()
-ADDON_VERSION = ADDON.getAddonInfo('version')
-ADDON_LANGUAGE = ADDON.getLocalizedString
-ADDON_PATH = ADDON.getAddonInfo('path').decode("utf-8")
-ADDON_ID = ADDON.getAddonInfo('id')
-ADDON_DATA_PATH = os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
-HOME = xbmcgui.Window(10000)
+ADDON =             xbmcaddon.Addon()
+ADDON_VERSION =     ADDON.getAddonInfo('version')
+ADDON_LANGUAGE =    ADDON.getLocalizedString
+ADDON_PATH =        ADDON.getAddonInfo('path').decode("utf-8")
+ADDON_ID =          ADDON.getAddonInfo('id')
+ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
+HOME =              xbmcgui.Window(10000)
 
 sys.path.append(xbmc.translatePath(os.path.join(ADDON_PATH, 'resources', 'lib')))
 
@@ -86,7 +86,7 @@ class ColorBoxMain:
                         tm1 = Thread(target=Color_Only, args=(self.image_now_FIVE, "ImageColorFIVE", "ImageCColorFIVE"))
                         tm1.start()
                     except:
-                        log("Could not process image for cfa daemon")
+                        log("Could not process image for FIVE daemon")
             cfa_daemon_set = HOME.getProperty("cfa_daemon_set")
             #curr_window = xbmc.getInfoLabel("Window.Property(xmlfile)")
             if not cfa_daemon_set == 'None':
