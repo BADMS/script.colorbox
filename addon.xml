@@ -11,7 +11,7 @@
 	<extension point="xbmc.addon.metadata">
 		<language/>
 		<summary lang="en">colorbox Script</summary>
-		<description lang="en">Provides more image tools for skinners. Thanks to phil65 script.toolbox addon.</description>
+		<description lang="en">Provides more image tools for skinners.</description>
 		<platform>all</platform>
 		<license>GNU GENERAL PUBLIC LICENSE Version 2, June 1991</license>
 		<forum>http://forum.kodi.tv/</forum>
