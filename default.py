@@ -18,19 +18,19 @@ sys.path.append(xbmc.translatePath(os.path.join(ADDON_PATH, 'resources', 'lib'))
 from Utils import *
 
 ColorBox_function_map = {
-        'blur': blur,
-        'pixelate': pixelate,
-        'shiftblock': shiftblock,
-        'pixelnone': pixelnone,
-        'pixelwaves': pixelwaves,
-        'pixelrandom': pixelrandom,
-        'pixelfile': pixelfile,
-        'pixelfedges': pixelfedges,
-        'pixeledges': pixeledges,
-        'fakelight': fakelight,
-        'twotone': twotone,
-        'posterize': posterize,
-        'distort': distort
+        'blur':         blur,
+        'pixelate':     pixelate,
+        'shiftblock':   shiftblock,
+        'pixelnone':    pixelnone,
+        'pixelwaves':   pixelwaves,
+        'pixelrandom':  pixelrandom,
+        'pixelfile':    pixelfile,
+        'pixelfedges':  pixelfedges,
+        'pixeledges':   pixeledges,
+        'fakelight':    fakelight,
+        'twotone':      twotone,
+        'posterize':    posterize,
+        'distort':      distort
 }
 
 
@@ -56,9 +56,9 @@ class ColorBoxMain:
                     for arg in self.prefix_now_NINE.strip().split(','):
                         arg = arg.replace("'\"", "").replace("\"'", "")
                         if arg.startswith('info='):
-                            self.info = RemoveQuotes(arg[5:])
+                            self.info = Remove_Quotes(arg[5:])
                         elif arg.startswith('id='):
-                            self.id = RemoveQuotes(arg[3:])
+                            self.id = Remove_Quotes(arg[3:])
                         elif arg.startswith('prefix='):
                             self.prefix = arg[7:]
                             if not self.prefix.endswith("."):
@@ -74,9 +74,10 @@ class ColorBoxMain:
             FIVE_daemon_set = HOME.getProperty("FIVE_daemon_set")
             if not FIVE_daemon_set == 'None':
                 self.image_now_FIVE = xbmc.getInfoLabel("Control.GetLabel(7975)")
-                if self.image_now_FIVE != self.image_prev_FIVE and self.image_now_FIVE != "":
+                if self.image_now_FIVE != self.image_prev_FIVE and self.image_now_FIVE != "" or HOME.getProperty("FIVE_daemon_fire"):
                     try:
                         HOME.setProperty('Daemon_FIVE_ImageUpdating', '0')
+                        HOME.clearProperty("FIVE_daemon_fire")
                         self.image_prev_FIVE = self.image_now_FIVE
                         HOME.setProperty("OldImageColorFIVE", HOME.getProperty("ImageColorFIVE"))
                         HOME.setProperty("OldImageCColorFIVE", HOME.getProperty("ImageCColorFIVE"))
@@ -116,9 +117,10 @@ class ColorBoxMain:
                         log("Could not process image for SEVEN daemon")
             if not HOME.getProperty("EIGHT_daemon_set") == 'None':
                 self.image_now_EIGHT = xbmc.getInfoLabel("Control.GetLabel(7978)")
-                if self.image_now_EIGHT != self.image_prev_EIGHT and self.image_now_EIGHT != "":
+                if self.image_now_EIGHT != self.image_prev_EIGHT and self.image_now_EIGHT != "" or HOME.getProperty("EIGHT_daemon_fire"):
                     try:
                         HOME.setProperty('Daemon_EIGHT_ImageUpdating', '0')
+                        HOME.clearProperty("EIGHT_daemon_fire")
                         self.image_prev_EIGHT = self.image_now_EIGHT
                         HOME.setProperty("OldImageColorEIGHT", HOME.getProperty("ImageColorEIGHT"))
                         HOME.setProperty("OldImageCColorEIGHT", HOME.getProperty("ImageCColorEIGHT"))
@@ -160,40 +162,40 @@ class ColorBoxMain:
         HOME.setProperty("ImageCColorEIGHT", "FFffffff")
         HOME.setProperty("OldImageCColorNINE", "FFffffff")
         HOME.setProperty("ImageCColorNINE", "FFffffff")
-        self.window = xbmcgui.Window(10000)  # Home Window
-        self.control = None
-        self.id = ""
-        self.dbid = ""
-        self.ptype = "none"
-        self.prefix = ""
-        self.radius = 10
-        self.bits = 2
-        self.pixels = 20
-        self.container = 518
-        self.black = "#000000"
-        self.white = "#FFFFFF"
-        self.delta_x = 50
-        self.delta_y = 90
-        self.blocksize = 192
-        self.sigma = 0.05
-        self.iterations = 1920
-        self.daemon = False
-        self.show_now = ""
-        self.show_prev = ""
-        self.show_watched = ""
-        self.image_now_FIVE = ""
-        self.image_now_cfa = ""
-        self.image_now_SEVEN = ""
-        self.image_now_EIGHT = ""
-        self.image_now_NINE = ""
-        self.image_prev_FIVE = ""
-        self.image_prev_cfa = ""
+        self.window =           xbmcgui.Window(10000)  # Home Window
+        self.control =          None
+        self.id =               ""
+        self.dbid =             ""
+        self.ptype =            "none"
+        self.prefix =           ""
+        self.radius =           10
+        self.bits =             2
+        self.pixels =           20
+        self.container =        518
+        self.black =            "#000000"
+        self.white =            "#FFFFFF"
+        self.delta_x =          50
+        self.delta_y =          90
+        self.blocksize =        192
+        self.sigma =            0.05
+        self.iterations =       1920
+        self.daemon =           False
+        self.show_now =         ""
+        self.show_prev =        ""
+        self.show_watched =     ""
+        self.image_now_FIVE =   ""
+        self.image_now_cfa =    ""
+        self.image_now_SEVEN =  ""
+        self.image_now_EIGHT =  ""
+        self.image_now_NINE =   ""
+        self.image_prev_FIVE =  ""
+        self.image_prev_cfa =   ""
         self.image_prev_SEVEN = ""
         self.image_prev_EIGHT = ""
-        self.image_prev_NINE = ""
-        self.prefix_now_NINE = ""
+        self.image_prev_NINE =  ""
+        self.prefix_now_NINE =  ""
         self.prefix_prev_NINE = ""
-        self.autoclose = ""
+        self.autoclose =        ""
 
     def _parse_argv(self):
         args = sys.argv
@@ -205,7 +207,7 @@ class ColorBoxMain:
             elif arg.startswith('info='):
                 self.infos.append(arg[5:])
             elif arg.startswith('id='):
-                self.id = RemoveQuotes(arg[3:])
+                self.id = Remove_Quotes(arg[3:])
             elif arg.startswith('dbid='):
                 self.dbid = int(arg[5:])
             elif arg.startswith('daemon='):

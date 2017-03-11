@@ -16,37 +16,37 @@ from xml.dom.minidom import parse
 import time
 from threading import Thread
 
-ADDON = xbmcaddon.Addon()
-ADDON_ID = ADDON.getAddonInfo('id')
-ADDON_LANGUAGE = ADDON.getLocalizedString
-ADDON_DATA_PATH = os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
-ADDON_COLORS = os.path.join(ADDON_DATA_PATH, "colors.txt")
-HOME = xbmcgui.Window(10000)
+ADDON =             xbmcaddon.Addon()
+ADDON_ID =          ADDON.getAddonInfo('id')
+ADDON_LANGUAGE =    ADDON.getLocalizedString
+ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
+ADDON_COLORS =      os.path.join(ADDON_DATA_PATH, "colors.txt")
+HOME =              xbmcgui.Window(10000)
 
-black_pixel = (0, 0, 0, 255)
-white_pixel = (255, 255, 255, 255)
-randomness = int(0)
-threshold = int(100)
-clength = int(50)
-angle = float(0)
-colors_dict={}
+black_pixel =       (0, 0, 0, 255)
+white_pixel =       (255, 255, 255, 255)
+randomness =        (0)
+threshold =         int(100)
+clength =           int(50)
+angle =             float(0)
+colors_dict =       {}
 
-delta_x=40
-delta_y=90
-radius=5
-pixelsize=20
-blockSize=192
-sigma=0.05
-iterations=1920
+delta_x =           40
+delta_y =           90
+radius =            5
+pixelsize =         20
+blockSize =         192
+sigma =             0.05
+iterations =        1920
 
-pthreshold=100
-pclength=50
-pangle=00
-prandomness=10
-lightsize=192
-black="#000000"
-white="#ffffff"
-bits=1
+pthreshold =        100
+pclength =          50
+pangle =            00
+prandomness =       10
+lightsize =         192
+black =             "#000000"
+white =             "#ffffff"
+bits =              1
 
 
 def Random_Color():
@@ -71,7 +71,7 @@ def Complementary_Color(hex_color):
     """
     return "FF" + "%s" % ''.join(comp)
 
-def RemoveQuotes(label):
+def Remove_Quotes(label):
     if label.startswith("'") and label.endswith("'") and len(label) > 2:
         label = label[1:-1]
         if label.startswith('"') and label.endswith('"') and len(label) > 2:
