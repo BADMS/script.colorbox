@@ -25,16 +25,19 @@ HOME =              xbmcgui.Window(10000)
 
 black_pixel =       (0, 0, 0, 255)
 white_pixel =       (255, 255, 255, 255)
+
 randomness =        (0)
 threshold =         int(100)
 clength =           int(50)
 angle =             float(0)
-colors_dict =       {}
 
 delta_x =           40
 delta_y =           90
-radius =            5
+
+radius =            1
+
 pixelsize =         20
+
 blockSize =         192
 sigma =             0.05
 iterations =        1920
@@ -43,11 +46,37 @@ pthreshold =        100
 pclength =          50
 pangle =            00
 prandomness =       10
+
 lightsize =         192
+
 black =             "#000000"
 white =             "#ffffff"
+
 bits =              1
 
+quality =           5
+
+colors_dict =       {}
+
+def set_quality(new_value):
+    global quality
+    quality = int(new_value)
+    HOME.setProperty('Colorbox_QUALITY', str(new_value))
+
+def set_blursize(new_value):
+    global radius
+    radius = int(new_value)
+    HOME.setProperty('Colorbox_BLURSIZE', str(new_value))
+
+def set_bitsize(new_value):
+    global bits
+    bits = int(new_value)
+    HOME.setProperty('Colorbox_BITSIZE', str(new_value))
+
+def set_pixelsize(new_value):
+    global pixelsize
+    pixelsize = int(new_value)
+    HOME.setProperty('Colorbox_PIXELSIZE', str(new_value))
 
 def Random_Color():
     return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
@@ -173,14 +202,17 @@ def Color_Only_Manual(filterimage):
 
 def blur(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "blur" + str(radius) + ".png"
+    filename = md5 + "blur" + str(radius) + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
         if Img == "":
             return ""
         img = Image.open(Img)
-        img.thumbnail((200, 200), Image.ANTIALIAS)
+        width, height = img.size
+        qwidth = width / quality
+        qheight = height / quality
+        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
         img = img.convert('RGB')
         imgfilter = MyGaussianBlur(radius=radius)
         img = img.filter(imgfilter)
@@ -233,7 +265,7 @@ def pixeledges(filterimage):
 def pixelshift(filterimage, ptype="none"):
     """stype; 1=random, 2=edges, 3=waves, 4=file, 5=file_edges, 0=none"""
     md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "pixelshift" + str(ptype) + str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + ".png"
+    filename = md5 + "pixelshift" + str(ptype) + str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     global threshold
     threshold = int(pthreshold)
@@ -248,7 +280,10 @@ def pixelshift(filterimage, ptype="none"):
         if Img == "":
             return ""
         img = Image.open(Img)
-        img.thumbnail((400, 400), Image.ANTIALIAS)
+        width, height = img.size
+        qwidth = width / quality
+        qheight = height / quality
+        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
         img = img.convert('RGB')
         img = Pixelshift_Image(img, ptype)
         img.save(targetfile)
@@ -299,14 +334,17 @@ def posterize(filterimage):
 
 def distort(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "distort" + str(delta_x) + str(delta_y) + ".png"
+    filename = md5 + "distort" + str(delta_x) + str(delta_y) + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
         if Img == "":
             return ""
         img = Image.open(Img)
-        img.thumbnail((400, 400), Image.ANTIALIAS)
+        width, height = img.size
+        qwidth = width / quality
+        qheight = height / quality
+        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
         img = img.convert('RGB')
         img = image_distort(img,delta_x,delta_y)
         img.save(targetfile)

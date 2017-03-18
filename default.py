@@ -33,6 +33,13 @@ ColorBox_function_map = {
         'distort':      distort
 }
 
+ColorBox_settings_map = {
+        'pixelsize':        set_pixelsize,
+        'bitsize':          set_bitsize,
+        'blursize':         set_blursize,
+        'quality':          set_quality
+}
+
 
 class ColorBoxMain:
     def __init__(self):
@@ -53,22 +60,32 @@ class ColorBoxMain:
                 try:
                     HOME.setProperty('Daemon_NINE_ImageUpdating', '0')
                     self.prefix_prev_NINE = self.prefix_now_NINE
+                    self.info = ""
+                    self.var = ""
                     for arg in self.prefix_now_NINE.strip().split(','):
                         arg = arg.replace("'\"", "").replace("\"'", "")
                         if arg.startswith('info='):
                             self.info = Remove_Quotes(arg[5:])
                         elif arg.startswith('id='):
                             self.id = Remove_Quotes(arg[3:])
+                        elif arg.startswith('set='):
+                            self.set = Remove_Quotes(arg[4:])
+                        elif arg.startswith('var='):
+                            self.var = Remove_Quotes(arg[4:])
                         elif arg.startswith('prefix='):
                             self.prefix = arg[7:]
                             if not self.prefix.endswith("."):
                                 self.prefix = self.prefix + "."
-                    HOME.setProperty(self.prefix + "ImageFilterNINE", ColorBox_function_map[self.info](self.id))
-                    HOME.setProperty(self.prefix + "ImageNINE", self.id)
-                    HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
-                    imagecolor, cimagecolor = Color_Only_Manual(self.id)
-                    HOME.setProperty(self.prefix + "ImageColorNINE", imagecolor)
-                    HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
+                    if self.info != "":
+                        HOME.setProperty(self.prefix + "ImageFilterNINE", ColorBox_function_map[self.info](self.id))
+                        HOME.setProperty(self.prefix + "ImageNINE", self.id)
+                        HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
+                        imagecolor, cimagecolor = Color_Only_Manual(self.id)
+                        HOME.setProperty(self.prefix + "ImageColorNINE", imagecolor)
+                        HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
+                    elif self.var != "":
+                        #change various settings
+                        ColorBox_settings_map[self.var](self.set)
                 except:
                     log("Could not process image for NINE daemon")
             FIVE_daemon_set = HOME.getProperty("FIVE_daemon_set")
@@ -131,7 +148,7 @@ class ColorBoxMain:
                         tm4.start()
                     except:
                         log("Could not process image for EIGHT daemon")
-            xbmc.sleep(200)
+            xbmc.sleep(100)
 
     def _StartInfoActions(self):
         for info in self.infos:
@@ -208,8 +225,6 @@ class ColorBoxMain:
                 self.infos.append(arg[5:])
             elif arg.startswith('id='):
                 self.id = Remove_Quotes(arg[3:])
-            elif arg.startswith('dbid='):
-                self.dbid = int(arg[5:])
             elif arg.startswith('daemon='):
                 self.daemon = True
             elif arg.startswith('prefix='):
