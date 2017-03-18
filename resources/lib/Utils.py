@@ -54,29 +54,29 @@ white =             "#ffffff"
 
 bits =              1
 
-quality =           5
+quality =           8
 
 colors_dict =       {}
 
 def set_quality(new_value):
     global quality
     quality = int(new_value)
-    HOME.setProperty('Colorbox_QUALITY', str(new_value))
+    xbmc.executebuiltin('Skin.SetString(colorbox_quality,'+str(new_value)+')') 
 
 def set_blursize(new_value):
     global radius
     radius = int(new_value)
-    HOME.setProperty('Colorbox_BLURSIZE', str(new_value))
+    xbmc.executebuiltin('Skin.SetString(colorbox_blursize,'+str(new_value)+')') 
 
 def set_bitsize(new_value):
     global bits
     bits = int(new_value)
-    HOME.setProperty('Colorbox_BITSIZE', str(new_value))
+    xbmc.executebuiltin('Skin.SetString(colorbox_bits,'+str(new_value)+')') 
 
 def set_pixelsize(new_value):
     global pixelsize
     pixelsize = int(new_value)
-    HOME.setProperty('Colorbox_PIXELSIZE', str(new_value))
+    xbmc.executebuiltin('Skin.SetString(colorbox_pixelsize,'+str(new_value)+')') 
 
 def Random_Color():
     return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
