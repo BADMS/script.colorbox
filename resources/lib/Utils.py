@@ -21,6 +21,7 @@ ADDON_ID =          ADDON.getAddonInfo('id')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
 ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
 ADDON_COLORS =      os.path.join(ADDON_DATA_PATH, "colors.txt")
+ADDON_SETTINGS =    os.path.join(ADDON_DATA_PATH, "settings.")
 HOME =              xbmcgui.Window(10000)
 
 black_pixel =       (0, 0, 0, 255)
@@ -61,22 +62,34 @@ colors_dict =       {}
 def set_quality(new_value):
     global quality
     quality = int(new_value)
+    #file = open(ADDON_SETTINGS + "quality",'w')
+    #file.write(str(new_value))
+    #file.close()
     xbmc.executebuiltin('Skin.SetString(colorbox_quality,'+str(new_value)+')') 
 
 def set_blursize(new_value):
     global radius
     radius = int(new_value)
+    #file = open(ADDON_SETTINGS + "radius",'w')
+    #file.write(str(new_value))
+    #file.close()
     xbmc.executebuiltin('Skin.SetString(colorbox_blursize,'+str(new_value)+')') 
 
 def set_bitsize(new_value):
     global bits
     bits = int(new_value)
-    xbmc.executebuiltin('Skin.SetString(colorbox_bits,'+str(new_value)+')') 
+    #file = open(ADDON_SETTINGS + "bits",'w')
+    #file.write(str(new_value))
+    #file.close()
+    xbmc.executebuiltin('Skin.SetString(colorbox_bitsize,'+str(new_value)+')') 
 
 def set_pixelsize(new_value):
     global pixelsize
     pixelsize = int(new_value)
-    xbmc.executebuiltin('Skin.SetString(colorbox_pixelsize,'+str(new_value)+')') 
+    #file = open(ADDON_SETTINGS + "pixelsize",'w')
+    #file.write(str(new_value))
+    #file.close()
+    xbmc.executebuiltin('Skin.SetString(colorbox_pixelsize,'+str(pixelsize)+')') 
 
 def Random_Color():
     return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
@@ -220,16 +233,16 @@ def blur(filterimage):
     return targetfile
 
 
-def pixelate(filterimage, pixelSize=pixelsize):
+def pixelate(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "pixelate" + str(pixelSize) + ".png"
+    filename = md5 + "pixelate" + str(pixelsize) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
         if Img == "":
             return ""
         img = Image.open(Img)
-        img = Pixelate_Image(img, pixelSize)
+        img = Pixelate_Image(img)
         img.save(targetfile)
     return targetfile
 
@@ -464,15 +477,15 @@ def RGB_to_hex(RGB):
     RGB = [int(x) for x in RGB]
     return "FF"+"".join(["0{0:x}".format(v) if v < 16 else "{0:x}".format(v) for v in RGB])
 
-def Pixelate_Image(img, pixelSize=pixelsize):
+def Pixelate_Image(img):
     backgroundColor = (0,)*3
     image = img
-    image = image.resize((image.size[0]/pixelSize, image.size[1]/pixelSize), Image.NEAREST)
-    image = image.resize((image.size[0]*pixelSize, image.size[1]*pixelSize), Image.NEAREST)
+    image = image.resize((image.size[0]/pixelsize, image.size[1]/pixelsize), Image.NEAREST)
+    image = image.resize((image.size[0]*pixelsize, image.size[1]*pixelsize), Image.NEAREST)
     pixel = image.load()
-    for i in range(0,image.size[0],pixelSize):
-      for j in range(0,image.size[1],pixelSize):
-        for r in range(pixelSize):
+    for i in range(0,image.size[0],pixelsize):
+      for j in range(0,image.size[1],pixelsize):
+        for r in range(pixelsize):
           pixel[i+r,j] = backgroundColor
           pixel[i,j+r] = backgroundColor
     return image

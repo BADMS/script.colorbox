@@ -56,9 +56,10 @@ class ColorBoxMain:
                 self.show_watched = xbmc.getInfoLabel("ListItem.Property(WatchedEpisodes)")
                 Show_Percentage()
             self.prefix_now_NINE = HOME.getProperty("NINE_manual_set")
-            if self.prefix_now_NINE != '' and self.prefix_now_NINE != self.prefix_prev_NINE:
+            if self.prefix_now_NINE != '' and self.prefix_now_NINE != self.prefix_prev_NINE or HOME.getProperty("NINE_daemon_fire"):
                 try:
                     HOME.setProperty('Daemon_NINE_ImageUpdating', '0')
+                    HOME.clearProperty("NINE_daemon_fire")
                     self.prefix_prev_NINE = self.prefix_now_NINE
                     self.info = ""
                     self.var = ""
@@ -148,7 +149,7 @@ class ColorBoxMain:
                         tm4.start()
                     except:
                         log("Could not process image for EIGHT daemon")
-            xbmc.sleep(100)
+            xbmc.sleep(200)
 
     def _StartInfoActions(self):
         for info in self.infos:
