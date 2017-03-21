@@ -21,7 +21,7 @@ ADDON_ID =          ADDON.getAddonInfo('id')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
 ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
 ADDON_COLORS =      os.path.join(ADDON_DATA_PATH, "colors.txt")
-ADDON_SETTINGS =    os.path.join(ADDON_DATA_PATH, "settings.")
+#ADDON_SETTINGS =    os.path.join(ADDON_DATA_PATH, "settings.")
 HOME =              xbmcgui.Window(10000)
 
 black_pixel =       (0, 0, 0, 255)
