@@ -37,6 +37,8 @@ ColorBox_settings_map = {
         'pixelsize':        set_pixelsize,
         'bitsize':          set_bitsize,
         'blursize':         set_blursize,
+        'black':            set_black,
+        'white':            set_white,
         'quality':          set_quality
 }
 
@@ -51,6 +53,7 @@ class ColorBoxMain:
             xbmcvfs.mkdir(ADDON_DATA_PATH)
         if self.control == "plugin":
             xbmcplugin.endOfDirectory(self.handle)
+        Load_Colors_Dict()
         while self.daemon and not xbmc.abortRequested:
             if xbmc.getInfoLabel("ListItem.Property(WatchedEpisodes)") != self.show_watched:
                 self.show_watched = xbmc.getInfoLabel("ListItem.Property(WatchedEpisodes)")
@@ -110,9 +113,10 @@ class ColorBoxMain:
             #curr_window = xbmc.getInfoLabel("Window.Property(xmlfile)")
             if not cfa_daemon_set == 'None':
                 self.image_now_cfa = xbmc.getInfoLabel("ListItem.Art(fanart)")
-                if self.image_now_cfa != self.image_prev_cfa and self.image_now_cfa != "":
+                if self.image_now_cfa != self.image_prev_cfa and self.image_now_cfa != "" or HOME.getProperty("cfa_daemon_fire"):
                     try:
                         HOME.setProperty('DaemonFanartImageUpdating', '0')
+                        HOME.clearProperty("cfa_daemon_fire")
                         self.image_prev_cfa = self.image_now_cfa
                         HOME.setProperty("OldImageColorcfa", HOME.getProperty("ImageColorcfa"))
                         HOME.setProperty("OldImageCColorcfa", HOME.getProperty("ImageCColorcfa"))

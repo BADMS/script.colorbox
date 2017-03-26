@@ -26,7 +26,6 @@ HOME =              xbmcgui.Window(10000)
 
 black_pixel =       (0, 0, 0, 255)
 white_pixel =       (255, 255, 255, 255)
-
 randomness =        (0)
 threshold =         int(100)
 clength =           int(50)
@@ -91,6 +90,22 @@ def set_pixelsize(new_value):
     #file.close()
     xbmc.executebuiltin('Skin.SetString(colorbox_pixelsize,'+str(pixelsize)+')') 
 
+def set_black(new_value):
+    global black
+    black = "#" + str(new_value)
+    #file = open(ADDON_SETTINGS + "black",'w')
+    #file.write(str(new_value))
+    #file.close()
+    xbmc.executebuiltin('Skin.SetString(colorbox_black,'+str(new_value)+')') 
+
+def set_white(new_value):
+    global white
+    white = "#" + str(new_value)
+    #file = open(ADDON_SETTINGS + "white",'w')
+    #file.write(str(new_value))
+    #file.close()
+    xbmc.executebuiltin('Skin.SetString(colorbox_white,'+str(new_value)+')') 
+
 def Random_Color():
     return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
 
@@ -138,15 +153,7 @@ def Show_Percentage():
 
 def Color_Only(filterimage, cname, ccname):
     md5 = hashlib.md5(filterimage).hexdigest()
-    if not colors_dict:
-        try:
-            with open(ADDON_COLORS) as file:
-                for line in file:
-                    a, b, c = line.strip().split(':')
-                    global colors_dict
-                    colors_dict[a] = b + ':' + c
-        except:
-            log ("no colors.txt yet")
+    if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:
         filename = md5 + ".png"
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
@@ -160,11 +167,7 @@ def Color_Only(filterimage, cname, ccname):
             img = img.convert('RGB')
             imagecolor, cimagecolor = Get_Colors(img, md5)
 
-            global colors_dict
-            colors_dict[md5] = imagecolor + ':' + cimagecolor  # update entry
-            with open(ADDON_COLORS, 'w') as file:  # rewrite file
-                for id, values in colors_dict.items():
-                    file.write(':'.join([id] + values.split(':')) + '\n')
+            Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     var3 = 'Old' + cname
@@ -182,15 +185,7 @@ def Color_Only(filterimage, cname, ccname):
 
 def Color_Only_Manual(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
-    if not colors_dict:
-        try:
-            with open(ADDON_COLORS) as file:
-                for line in file:
-                    a, b, c = line.strip().split(':')
-                    global colors_dict
-                    colors_dict[a] = b + ':' + c
-        except:
-            log ("no colors.txt yet")
+    if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:
         filename = md5 + ".png"
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
@@ -203,11 +198,7 @@ def Color_Only_Manual(filterimage):
             img.thumbnail((200, 200))
             img = img.convert('RGB')
             imagecolor, cimagecolor = Get_Colors(img, md5)
-            global colors_dict
-            colors_dict[md5] = imagecolor + ':' + cimagecolor  # update entry
-            with open(ADDON_COLORS, 'w') as file:  # rewrite file
-                for id, values in colors_dict.items():
-                    file.write(':'.join([id] + values.split(':')) + '\n')
+            Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     return imagecolor, cimagecolor
@@ -365,15 +356,7 @@ def distort(filterimage):
 
 
 def Get_Colors(img, md5):
-    if not colors_dict:
-        try:
-            with open(ADDON_COLORS) as file:
-                for line in file:
-                    a, b, c = line.strip().split(':')
-                    global colors_dict
-                    colors_dict[a] = b + ':' + c
-        except:
-            log ("no colors.txt yet")
+    if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:
         colour_tuple = [None, None, None]
         for channel in range(3):
@@ -385,11 +368,7 @@ def Get_Colors(img, md5):
             colour_tuple[channel] = clamp(sum(values) / len(values))
         imagecolor = 'ff%02x%02x%02x' % tuple(colour_tuple)
         cimagecolor = Complementary_Color(imagecolor)
-        global colors_dict
-        colors_dict[md5] = imagecolor + ':' + cimagecolor  # update entry
-        with open(ADDON_COLORS, 'w') as file:  # rewrite file
-            for id, values in colors_dict.items():
-                file.write(':'.join([id] + values.split(':')) + '\n')
+        Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     return imagecolor, cimagecolor
@@ -780,6 +759,25 @@ def image_distort(img, delta_x=50, delta_y=90):
             # do the shuffling
             output_img[x,y] = img_data[tuple(pix)]
     return output            
+
+
+def Load_Colors_Dict():
+    try:
+        with open(ADDON_COLORS) as file:
+            for line in file:
+                a, b, c = line.strip().split(':')
+                global colors_dict
+                colors_dict[a] = b + ':' + c
+    except:
+        log ("no colors.txt yet")
+
+
+def Write_Colors_Dict(md5,imagecolor,cimagecolor):
+    global colors_dict
+    colors_dict[md5] = imagecolor + ':' + cimagecolor  # update entry
+    with open(ADDON_COLORS, 'w') as file:  # rewrite file
+        for id, values in colors_dict.items():
+            file.write(':'.join([id] + values.split(':')) + '\n')
 
 
 def log(txt):
