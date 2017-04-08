@@ -128,6 +128,15 @@ def Complementary_Color(hex_color):
     """
     return "FF" + "%s" % ''.join(comp)
 
+def Black_White(hex_color, prop):
+    """Set contrast for given color
+    (red*0.299+green*0.587+blue*0.114)=x
+    If x > 186 output black
+    """
+    comp = hex_to_RGB(hex_color)
+    contrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
+    xbmc.executebuiltin('Skin.SetString(colorbox_contrast,'+str(contrast)+')') 
+
 def Remove_Quotes(label):
     if label.startswith("'") and label.endswith("'") and len(label) > 2:
         label = label[1:-1]
@@ -148,7 +157,6 @@ def Show_Percentage():
         HOME.setProperty("Show_Percentage", perc)
     except:
         return
-    return
 
 
 def Color_Only(filterimage, cname, ccname):
@@ -170,8 +178,10 @@ def Color_Only(filterimage, cname, ccname):
             Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
+    var2 = 'BW' + cname
     var3 = 'Old' + cname
     var4 = 'Old' + ccname
+    Black_White(imagecolor, var2)
     tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 0.01, var3))
     tmc.start()
     tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 0.01, var4))
