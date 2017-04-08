@@ -135,7 +135,7 @@ def Black_White(hex_color, prop):
     """
     comp = hex_to_RGB(hex_color)
     contrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
-    xbmc.executebuiltin('Skin.SetString(colorbox_contrast,'+str(contrast)+')') 
+    HOME.setProperty(prop, str(contrast))
 
 def Remove_Quotes(label):
     if label.startswith("'") and label.endswith("'") and len(label) > 2:
