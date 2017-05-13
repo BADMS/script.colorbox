@@ -212,11 +212,39 @@ class ColorBoxMonitor(xbmc.Monitor):
         # HOME.setProperty(self.prefix + 'ImageFilter', image)
         # HOME.setProperty(self.prefix + "ImageColor", imagecolor)
 if __name__ == "__main__":
-    args = sys.argv
-    infos = []
+    args =		sys.argv
+    infos =		[]
+    infom =		""
+    idm =		""
+    setm =		""
+    varm =		""
+    prefixm	=	""
     for arg in args:
         arg = arg.replace("'\"", "").replace("\"'", "")
         if arg == 'script.colorbox':
             continue
         elif arg.startswith('daemon='):
             ColorBoxMain()
+        elif arg.startswith('info='):
+            infom = Utils.Remove_Quotes(arg[5:])
+        elif arg.startswith('id='):
+            idm = Utils.Remove_Quotes(arg[3:])
+        elif arg.startswith('set='):
+            setm = Utils.Remove_Quotes(arg[4:])
+        elif arg.startswith('var='):
+            varm = Utils.Remove_Quotes(arg[4:])
+        elif arg.startswith('prefix='):
+            prefixm = arg[7:]
+            if not prefixm.endswith("."):
+                prefixm = prefixm + "."
+    Utils.log("err: go")
+    if infom != "":
+        HOME.setProperty(prefixm + "ImageFilter", ColorBox_function_map[infom](idm))
+        HOME.setProperty(prefixm + "Image", idm)
+        imagecolor, cimagecolor = Utils.Color_Only_Manual(idm)
+        HOME.setProperty(prefixm + "ImageColor", imagecolor)
+        HOME.setProperty(prefixm + "ImageCColor", cimagecolor)
+    elif varm != "":
+        #change various settings
+        ColorBox_settings_map[varm](setm)
+        Utils.log("err: %s, %s" % (varm, setm))
