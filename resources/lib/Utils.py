@@ -116,8 +116,11 @@ def Show_Percentage():
         HOME.setProperty("Show_Percentage", perc)
     except:
         return
-def Color_Only(filterimage, cname, ccname):
+def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='ffffffff'):
     md5 = hashlib.md5(filterimage).hexdigest()
+    var2 = 'BW' + cname
+    var3 = 'Old' + cname
+    var4 = 'Old' + ccname
     if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:
         filename = md5 + ".png"
@@ -133,9 +136,6 @@ def Color_Only(filterimage, cname, ccname):
             Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
-    var2 = 'BW' + cname
-    var3 = 'Old' + cname
-    var4 = 'Old' + ccname
     Black_White(imagecolor, var2)
     tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 0.01, var3))
     tmc.start()
@@ -144,7 +144,7 @@ def Color_Only(filterimage, cname, ccname):
     #linear_gradient(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 0.01, var3)
     #linear_gradient(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 0.01, var4)
     return imagecolor, cimagecolor
-def Color_Only_Manual(filterimage):
+def Color_Only_Manual(filterimage, imagecolor='ff000000', cimagecolor='ffffffff'):
     md5 = hashlib.md5(filterimage).hexdigest()
     if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:

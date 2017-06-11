@@ -208,16 +208,11 @@ class ColorBoxMonitor(xbmc.Monitor):
         pass
         # HOME.clearProperty(self.prefix + 'ImageFilter')
         # Notify("test", "test")
-        # image, imagecolor, cimagecolor = Filter_blur(self.id, self.radius)
-        # HOME.setProperty(self.prefix + 'ImageFilter', image)
-        # HOME.setProperty(self.prefix + "ImageColor", imagecolor)
 if __name__ == "__main__":
     args =		sys.argv
     infos =		[]
     infom =		""
     idm =		""
-    setm =		""
-    varm =		""
     prefixm	=	""
     for arg in args:
         arg = arg.replace("'\"", "").replace("\"'", "")
@@ -229,22 +224,28 @@ if __name__ == "__main__":
             infom = Utils.Remove_Quotes(arg[5:])
         elif arg.startswith('id='):
             idm = Utils.Remove_Quotes(arg[3:])
-        elif arg.startswith('set='):
-            setm = Utils.Remove_Quotes(arg[4:])
-        elif arg.startswith('var='):
-            varm = Utils.Remove_Quotes(arg[4:])
+        elif arg.startswith('quality='):
+            ColorBox_settings_map['quality'](Utils.Remove_Quotes(arg[8:]))
+        elif arg.startswith('blursize='):
+            ColorBox_settings_map['blursize'](Utils.Remove_Quotes(arg[9:]))
+        elif arg.startswith('pixelsize='):
+            ColorBox_settings_map['pixelsize'](Utils.Remove_Quotes(arg[10:]))
+        elif arg.startswith('bitsize='):
+            ColorBox_settings_map['bitsize'](Utils.Remove_Quotes(arg[8:]))
+        elif arg.startswith('black='):
+            ColorBox_settings_map['black'](Utils.Remove_Quotes(arg[6:]))
+        elif arg.startswith('white='):
+            ColorBox_settings_map['white'](Utils.Remove_Quotes(arg[6:]))
         elif arg.startswith('prefix='):
             prefixm = arg[7:]
             if not prefixm.endswith("."):
                 prefixm = prefixm + "."
-    Utils.log("err: go")
-    if infom != "":
-        HOME.setProperty(prefixm + "ImageFilter", ColorBox_function_map[infom](idm))
-        HOME.setProperty(prefixm + "Image", idm)
-        imagecolor, cimagecolor = Utils.Color_Only_Manual(idm)
-        HOME.setProperty(prefixm + "ImageColor", imagecolor)
-        HOME.setProperty(prefixm + "ImageCColor", cimagecolor)
-    elif varm != "":
-        #change various settings
-        ColorBox_settings_map[varm](setm)
-        Utils.log("err: %s, %s" % (varm, setm))
+    if infom != "" and idm != "":
+        try:
+            HOME.setProperty(prefixm + "ImageFilter", ColorBox_function_map[infom](idm))
+            HOME.setProperty(prefixm + "Image", idm)
+            imagecolor, cimagecolor = Utils.Color_Only_Manual(idm)
+            HOME.setProperty(prefixm + "ImageColor", imagecolor)
+            HOME.setProperty(prefixm + "ImageCColor", cimagecolor)
+        except:
+            Utils.log("Could not process image for go_RUNSCRIPT_COLORBOX")
