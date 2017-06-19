@@ -27,12 +27,14 @@ ColorBox_function_map = {
         'posterize':    Utils.posterize,
         'distort':      Utils.distort}
 ColorBox_settings_map = {
-        'pixelsize':        Utils.set_pixelsize,
-        'bitsize':          Utils.set_bitsize,
-        'blursize':         Utils.set_blursize,
-        'black':            Utils.set_black,
-        'white':            Utils.set_white,
-        'quality':          Utils.set_quality}
+        'pixelsize':    Utils.set_pixelsize,
+        'bitsize':      Utils.set_bitsize,
+        'blursize':     Utils.set_blursize,
+        'black':        Utils.set_black,
+        'white':        Utils.set_white,
+        'quality':      Utils.set_quality}
+ColorBox_Strip =        ('[CR]', ' '), ('[CR]', ' ')
+#ColorBox_Strip =       ('[B]', ''), ('[/B]', ''), ('[CR]', ' ')
 class ColorBoxMain:
     def __init__(self):
         Utils.log("version %s started" % ADDON_VERSION)
@@ -49,6 +51,11 @@ class ColorBoxMain:
             if xbmc.getInfoLabel("ListItem.Property(UnWatchedEpisodes)") != self.show_watched:
                 self.show_watched = xbmc.getInfoLabel("ListItem.Property(UnWatchedEpisodes)")
                 Utils.Show_Percentage()
+            #HOME.setProperty('WidgetNameLabelVar', xbmc.getInfoLabel("Control.GetLabel(7973)").replace("[CR]", " "))
+            #HOME.setProperty('HomeHeaderSubline', xbmc.getInfoLabel("Control.GetLabel(7974)").replace("[CR]", " "))
+            HOME.setProperty('HeaderSubTagline', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7972)")))
+            HOME.setProperty('WidgetNameLabelVar', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7973)")))
+            HOME.setProperty('HomeHeaderSubline', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7974)")))
             self.prefix_now_NINE = HOME.getProperty("NINE_manual_set")
             if self.prefix_now_NINE != '' and self.prefix_now_NINE != self.prefix_prev_NINE or HOME.getProperty("NINE_daemon_fire"):
                 try:

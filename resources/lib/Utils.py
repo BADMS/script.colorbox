@@ -96,7 +96,10 @@ def Black_White(hex_color, prop):
     """
     comp = hex_to_RGB(hex_color)
     contrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
-    HOME.setProperty(prop, str(contrast))
+    luma = "{:.0f}".format((int(comp[0]) * 0.2126) + (int(comp[1]) * 0.7152) + (int(comp[2]) * 0.0722))
+    #luma = "{:.0f}".format(math.sqrt(0.241 * math.pow(int(comp[0]),2) + 0.691 * math.pow(int(comp[1]),2) + 0.068 * math.pow(int(comp[2]),2)))
+    HOME.setProperty('BW'+prop, str(contrast))
+    HOME.setProperty('LUMA'+prop, str(luma))
 def Remove_Quotes(label):
     if label.startswith("'") and label.endswith("'") and len(label) > 2:
         label = label[1:-1]
@@ -118,7 +121,6 @@ def Show_Percentage():
         return
 def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='ffffffff'):
     md5 = hashlib.md5(filterimage).hexdigest()
-    var2 = 'BW' + cname
     var3 = 'Old' + cname
     var4 = 'Old' + ccname
     if not colors_dict: Load_Colors_Dict()
@@ -136,7 +138,7 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
             Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
-    Black_White(imagecolor, var2)
+    Black_White(imagecolor, cname)
     tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 0.01, var3))
     tmc.start()
     tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 0.01, var4))
@@ -309,6 +311,12 @@ def Get_Colors(img, md5):
             colour_tuple[channel] = clamp(sum(values) / len(values))
         imagecolor = 'ff%02x%02x%02x' % tuple(colour_tuple)
         cimagecolor = Complementary_Color(imagecolor)
+        #color = hex_to_RGB(imagecolor)
+        #comp = hex_to_RGB(cimagecolor)
+        #contrast = "{:.0f}".format((int(color[0]) * 0.299) + (int(color[1]) * 0.587) + (int(color[2]) * 0.144))
+        #ccontrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
+        #if abs(int(contrast)-int(ccontrast)) < 50:
+        #    cimagecolor = RGB_to_hex("{:.0f}".format(clamp(int(comp[0]) - 50) + clamp(int(comp[1]) - 50) + clamp(int(comp[2]) - 50)))
         Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
