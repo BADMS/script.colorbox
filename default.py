@@ -53,9 +53,9 @@ class ColorBoxMain:
                 Utils.Show_Percentage()
             #HOME.setProperty('WidgetNameLabelVar', xbmc.getInfoLabel("Control.GetLabel(7973)").replace("[CR]", " "))
             #HOME.setProperty('HomeHeaderSubline', xbmc.getInfoLabel("Control.GetLabel(7974)").replace("[CR]", " "))
-            HOME.setProperty('HeaderSubTagline', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7972)")))
-            HOME.setProperty('WidgetNameLabelVar', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7973)")))
-            HOME.setProperty('HomeHeaderSubline', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7974)")))
+            HOME.setProperty('LabelFilterTWO', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7972)")))
+            HOME.setProperty('LabelFilterTHREE', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7973)")))
+            HOME.setProperty('LabelFilterFOUR', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_Strip, xbmc.getInfoLabel("Control.GetLabel(7974)")))
             self.prefix_now_NINE = HOME.getProperty("NINE_manual_set")
             if self.prefix_now_NINE != '' and self.prefix_now_NINE != self.prefix_prev_NINE or HOME.getProperty("NINE_daemon_fire"):
                 try:
