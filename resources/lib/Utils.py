@@ -350,7 +350,7 @@ def Get_Frequent_Color(img):
     return 'ff%02x%02x%02x' % tuple(most_frequent_pixel[1])
 def clamp(x):
     return max(0, min(x, 255))
-def linear_gradient(cname, start_hex="000000", finish_hex="FFFFFF", n=10, sleep=0.005, _thread_check=""):
+def linear_gradient(cname, start_hex="000000", finish_hex="FFFFFF", n=10, sleep=0.005, s_thread_check=""):
     ''' returns a gradient list of (n) colors between
     two hex colors. start_hex and finish_hex
     should be the full six-digit color string,
@@ -365,14 +365,14 @@ def linear_gradient(cname, start_hex="000000", finish_hex="FFFFFF", n=10, sleep=
     # Calcuate a color at each evenly spaced value of t from 1 to n
     for t in range(1, n):
         # Interpolate RGB vector for color at the current value of t
+        if HOME.getProperty(s_thread_check)[2:8] != start_hex:
+            return
         curr_vector = [
             int(s[j] + (float(t)/(n-1))*(f[j]-s[j]))
             for j in range(3)
         ]
         # Add it to our list of output colors
         HOME.setProperty(cname, RGB_to_hex(curr_vector))
-        if HOME.getProperty(_thread_check)[2:8] != start_hex:
-            return
         time.sleep(sleep)
     return
 def hex_to_RGB(hex):
