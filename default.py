@@ -161,7 +161,7 @@ class ColorBoxMain:
                             HOME.setProperty(self.wpnam + "ImageColor", imagecolor)
                             HOME.setProperty(self.wpnam + "ImageCColor", cimagecolor)
                         except:
-                            Utils.log("Could not process image for image_now_MULTI daemon %s" % wpnam)
+                            Utils.log("Could not process image for image_now_MULTI daemon %s" % self.wpnam)
             monitor.waitForAbort(0.2)
     def _init_vars(self):
         HOME.setProperty("OldImageColorFIVE", "FFffffff")
@@ -223,7 +223,6 @@ class ColorBoxMonitor(xbmc.Monitor):
         pass
 if __name__ == "__main__":
     args =		sys.argv
-    infos =		[]
     infom =		""
     idm =		""
     prefixm	=	""
