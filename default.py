@@ -33,7 +33,7 @@ ColorBox_settings_map = {
         'black':        Utils.set_black,
         'white':        Utils.set_white,
         'quality':      Utils.set_quality}
-ColorBox_strip =        ('[CR]', ' '), ('[CR]', ' ')
+ColorBox_strip =        ('[CR]', ' '), ('<BR>', ' '), ('<br>', ' '), ('&#10;', ' '), ('&&#10;', ' ')
 #ColorBox_strip =       ('[B]', ''), ('[/B]', ''), ('[CR]', ' ')
 class ColorBoxMain:
     def __init__(self):
@@ -48,9 +48,7 @@ class ColorBoxMain:
         Utils.Load_Colors_Dict()
         monitor = xbmc.Monitor()
         while self.daemon and not monitor.abortRequested():
-            if xbmc.getInfoLabel("ListItem.Property(UnWatchedEpisodes)") != self.show_watched:
-                self.show_watched = xbmc.getInfoLabel("ListItem.Property(UnWatchedEpisodes)")
-                Utils.Show_Percentage()
+            Utils.Show_Percentage()
             #HOME.setProperty('WidgetNameLabelVar', xbmc.getInfoLabel("Control.GetLabel(7973)").replace("[CR]", " "))
             #HOME.setProperty('HomeHeaderSubline', xbmc.getInfoLabel("Control.GetLabel(7974)").replace("[CR]", " "))
             HOME.setProperty('LabelFilterTWO', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7972)")))
@@ -151,14 +149,20 @@ class ColorBoxMain:
                         ColorBox_settings_map[self.var](self.set)
                 except:
                     Utils.log("Could not process image for NINE daemon")
+            if self.ColorBox_multis != []:
+                for line in self.ColorBox_multis:
+                    self.idm, self.wpnam, self.mfx = line.strip().split('|')
+                    self.image_now_MULTI = xbmc.getInfoLabel("Control.GetLabel(" + str(self.idm) + ")")
+                    if self.image_now_MULTI != HOME.getProperty(self.wpnam) and self.image_now_MULTI != "":
+                        try:
+                            HOME.setProperty(self.wpnam + "ImageFilter", ColorBox_function_map[self.mfx](self.image_now_MULTI))
+                            HOME.setProperty(self.wpnam + "Image", self.image_now_MULTI)
+                            imagecolor, cimagecolor = Utils.Color_Only_Manual(self.image_now_MULTI)
+                            HOME.setProperty(self.wpnam + "ImageColor", imagecolor)
+                            HOME.setProperty(self.wpnam + "ImageCColor", cimagecolor)
+                        except:
+                            Utils.log("Could not process image for image_now_MULTI daemon %s" % wpnam)
             monitor.waitForAbort(0.2)
-    def _StartInfoActions(self):
-        for info in self.infos:
-            if info == 'randomcolor':
-                HOME.setProperty(self.prefix + "ImageColor", Utils.Random_Color())
-                HOME.setProperty(self.prefix + "ImageCColor", Utils.Complementary_Color(HOME.getProperty(self.prefix + "ImageColor")))
-            elif info == 'percentage':
-                Utils.Show_Percentage()
     def _init_vars(self):
         HOME.setProperty("OldImageColorFIVE", "FFffffff")
         HOME.setProperty("ImageColorFIVE", "FFffffff")
@@ -202,10 +206,14 @@ class ColorBoxMain:
     def _parse_argv(self):
         args = sys.argv
         self.infos = []
+        self.ColorBox_multis = []
         for arg in args:
             arg = arg.replace("'\"", "").replace("\"'", "")
             if arg == 'script.colorbox':
                 continue
+            elif arg.startswith('multis='):
+                self.multim = Utils.Remove_Quotes(arg[7:])
+                self.ColorBox_multis = self.multim.split(":")
             elif arg.startswith('daemon='):
                 self.daemon = True
 class ColorBoxMonitor(xbmc.Monitor):
@@ -213,8 +221,6 @@ class ColorBoxMonitor(xbmc.Monitor):
         xbmc.Monitor.__init__(self)
     def onPlayBackStarted(self):
         pass
-        # HOME.clearProperty(self.prefix + 'ImageFilter')
-        # Notify("test", "test")
 if __name__ == "__main__":
     args =		sys.argv
     infos =		[]
@@ -247,7 +253,10 @@ if __name__ == "__main__":
             prefixm = arg[7:]
             if not prefixm.endswith("."):
                 prefixm = prefixm + "."
-    if infom != "" and idm != "":
+    if infom == 'randomcolor':
+        HOME.setProperty(prefixm + "ImageColor", Utils.Random_Color())
+        HOME.setProperty(prefixm + "ImageCColor", Utils.Complementary_Color(HOME.getProperty(prefixm + "ImageColor")))
+    elif infom != "" and idm != "":
         try:
             HOME.setProperty(prefixm + "ImageFilter", ColorBox_function_map[infom](idm))
             HOME.setProperty(prefixm + "Image", idm)
