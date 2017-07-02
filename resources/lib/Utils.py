@@ -15,6 +15,7 @@ from decimal import *
 from xml.dom.minidom import parse
 import time
 from threading import Thread
+from random import shuffle
 ADDON =             xbmcaddon.Addon()
 ADDON_ID =          ADDON.getAddonInfo('id')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
@@ -45,6 +46,7 @@ white =             "#ffffff"
 bits =              1
 quality =           8
 colors_dict =       {}
+shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def set_quality(new_value):
     global quality
     quality = int(new_value)
@@ -69,6 +71,31 @@ def set_white(new_value):
     global white
     white = "#" + str(new_value)
     xbmc.executebuiltin('Skin.SetString(colorbox_white,'+str(new_value)+')')
+def Shuffle_Set(amount):
+    board = [[i] for i in range(int(amount))]
+    shuffle(board)
+    HOME.setProperty('Colorbox_shuffle', '1')
+    time.sleep(0.1)
+    for peg in board:
+        peg = list(peg)
+        npeg = []
+        for p in peg:
+            npeg.append(shuffle_numbers[int(p)])
+        npegs = ''.join(npeg)
+        HOME.setProperty('Colorbox_shuffle.' + npegs, '1')
+        time.sleep(0.04)
+    shuffle(board)
+    HOME.setProperty('Colorbox_shuffle', '2')
+    time.sleep(0.1)
+    for peg in board:
+        peg = list(peg)
+        npeg = []
+        for p in peg:
+            npeg.append(shuffle_numbers[int(p)])
+        npegs = ''.join(npeg)
+        HOME.clearProperty('Colorbox_shuffle.' + npegs)
+        time.sleep(0.04)
+    HOME.setProperty('Colorbox_shuffle', '0')
 def Random_Color():
     return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
 def Complementary_Color(hex_color):

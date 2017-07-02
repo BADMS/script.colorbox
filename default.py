@@ -255,6 +255,8 @@ if __name__ == "__main__":
     if infom == 'randomcolor':
         HOME.setProperty(prefixm + "ImageColor", Utils.Random_Color())
         HOME.setProperty(prefixm + "ImageCColor", Utils.Complementary_Color(HOME.getProperty(prefixm + "ImageColor")))
+    elif infom == 'shuffle' and idm != '':
+        Utils.Shuffle_Set(idm)
     elif infom != "" and idm != "":
         try:
             HOME.setProperty(prefixm + "ImageFilter", ColorBox_function_map[infom](idm))
