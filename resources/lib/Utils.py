@@ -75,7 +75,6 @@ def Shuffle_Set(amount):
     board = [[i] for i in range(int(amount))]
     shuffle(board)
     HOME.setProperty('Colorbox_shuffle', '1')
-    time.sleep(0.1)
     for peg in board:
         peg = list(peg)
         npeg = []
@@ -86,7 +85,6 @@ def Shuffle_Set(amount):
         time.sleep(0.04)
     shuffle(board)
     HOME.setProperty('Colorbox_shuffle', '2')
-    time.sleep(0.1)
     for peg in board:
         peg = list(peg)
         npeg = []
