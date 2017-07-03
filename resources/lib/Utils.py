@@ -71,7 +71,8 @@ def set_white(new_value):
     global white
     white = "#" + str(new_value)
     xbmc.executebuiltin('Skin.SetString(colorbox_white,'+str(new_value)+')')
-def Shuffle_Set(amount):
+def Shuffle_Set(amount,timed=40):
+    timed = int(timed) / 1000.0
     board = [[i] for i in range(int(amount))]
     shuffle(board)
     HOME.setProperty('Colorbox_shuffle', '1')
@@ -82,9 +83,8 @@ def Shuffle_Set(amount):
             npeg.append(shuffle_numbers[int(p)])
         npegs = ''.join(npeg)
         HOME.setProperty('Colorbox_shuffle.' + npegs, '1')
-        time.sleep(0.04)
-    shuffle(board)
-    HOME.setProperty('Colorbox_shuffle', '2')
+        time.sleep(timed)
+    HOME.setProperty('Colorbox_shuffle', '0')
     for peg in board:
         peg = list(peg)
         npeg = []
@@ -92,8 +92,6 @@ def Shuffle_Set(amount):
             npeg.append(shuffle_numbers[int(p)])
         npegs = ''.join(npeg)
         HOME.clearProperty('Colorbox_shuffle.' + npegs)
-        time.sleep(0.04)
-    HOME.setProperty('Colorbox_shuffle', '0')
 def Random_Color():
     return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
 def Complementary_Color(hex_color):

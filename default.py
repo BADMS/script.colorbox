@@ -225,6 +225,7 @@ if __name__ == "__main__":
     args =		sys.argv
     infom =		""
     idm =		""
+    varm =		120
     prefixm	=	""
     for arg in args:
         arg = arg.replace("'\"", "").replace("\"'", "")
@@ -236,6 +237,8 @@ if __name__ == "__main__":
             infom = Utils.Remove_Quotes(arg[5:])
         elif arg.startswith('id='):
             idm = Utils.Remove_Quotes(arg[3:])
+        elif arg.startswith('var='):
+            varm = Utils.Remove_Quotes(arg[4:])
         elif arg.startswith('quality='):
             ColorBox_settings_map['quality'](Utils.Remove_Quotes(arg[8:]))
         elif arg.startswith('blursize='):
@@ -256,7 +259,8 @@ if __name__ == "__main__":
         HOME.setProperty(prefixm + "ImageColor", Utils.Random_Color())
         HOME.setProperty(prefixm + "ImageCColor", Utils.Complementary_Color(HOME.getProperty(prefixm + "ImageColor")))
     elif infom == 'shuffle' and idm != '':
-        Utils.Shuffle_Set(idm)
+        us1 = Thread(target=Utils.Shuffle_Set, args=(idm,varm))
+        us1.start()
     elif infom != "" and idm != "":
         try:
             HOME.setProperty(prefixm + "ImageFilter", ColorBox_function_map[infom](idm))
