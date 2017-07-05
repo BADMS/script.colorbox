@@ -84,6 +84,7 @@ def Shuffle_Set(amount,timed=40):
         npegs = ''.join(npeg)
         HOME.setProperty('Colorbox_shuffle.' + npegs, '1')
         time.sleep(timed)
+    shuffle(board)
     HOME.setProperty('Colorbox_shuffle', '0')
     for peg in board:
         peg = list(peg)
@@ -92,6 +93,7 @@ def Shuffle_Set(amount,timed=40):
             npeg.append(shuffle_numbers[int(p)])
         npegs = ''.join(npeg)
         HOME.clearProperty('Colorbox_shuffle.' + npegs)
+        time.sleep(timed)
 def Random_Color():
     return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
 def Complementary_Color(hex_color):

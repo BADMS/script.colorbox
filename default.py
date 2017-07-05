@@ -122,31 +122,35 @@ class ColorBoxMain:
                     HOME.clearProperty("NINE_daemon_fire")
                     self.prefix_prev_NINE = self.manual_set_NINE
                     self.info = ""
+                    self.id = ""
+                    self.set = ""
                     self.var = ""
-                    for arg in self.manual_set_NINE.strip().split(','):
-                        arg = arg.replace("'\"", "").replace("\"'", "")
-                        if arg.startswith('info='):
-                            self.info = Utils.Remove_Quotes(arg[5:])
-                        elif arg.startswith('id='):
-                            self.id = Utils.Remove_Quotes(arg[3:])
-                        elif arg.startswith('set='):
-                            self.set = Utils.Remove_Quotes(arg[4:])
-                        elif arg.startswith('var='):
-                            self.var = Utils.Remove_Quotes(arg[4:])
-                        elif arg.startswith('prefix='):
-                            self.prefix = arg[7:]
-                            if not self.prefix.endswith("."):
-                                self.prefix = self.prefix + "."
-                    if self.info != "":
-                        HOME.setProperty(self.prefix + "ImageFilterNINE", ColorBox_function_map[self.info](self.id))
-                        HOME.setProperty(self.prefix + "ImageNINE", self.id)
-                        HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
-                        imagecolor, cimagecolor = Utils.Color_Only_Manual(self.id)
-                        HOME.setProperty(self.prefix + "ImageColorNINE", imagecolor)
-                        HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
-                    elif self.var != "":
-                        #change various settings
-                        ColorBox_settings_map[self.var](self.set)
+                    self.prefix = ""
+                    for larg in self.manual_set_NINE.strip().split('|'):
+                        for arg in larg.strip().split(','):
+                            arg = arg.replace("'\"", "").replace("\"'", "")
+                            if arg.startswith('info='):
+                                self.info = Utils.Remove_Quotes(arg[5:])
+                            elif arg.startswith('id='):
+                                self.id = Utils.Remove_Quotes(arg[3:])
+                            elif arg.startswith('set='):
+                                self.set = Utils.Remove_Quotes(arg[4:])
+                            elif arg.startswith('var='):
+                                self.var = Utils.Remove_Quotes(arg[4:])
+                            elif arg.startswith('prefix='):
+                                self.prefix = arg[7:]
+                                if not self.prefix.endswith("."):
+                                    self.prefix = self.prefix + "."
+                        if self.info != "":
+                            HOME.setProperty(self.prefix + "ImageFilterNINE", ColorBox_function_map[self.info](self.id))
+                            HOME.setProperty(self.prefix + "ImageNINE", self.id)
+                            HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
+                            imagecolor, cimagecolor = Utils.Color_Only_Manual(self.id)
+                            HOME.setProperty(self.prefix + "ImageColorNINE", imagecolor)
+                            HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
+                        elif self.var != "":
+                            #change various settings
+                            ColorBox_settings_map[self.var](self.set)
                 except:
                     Utils.log("Could not process image for NINE daemon")
             if self.ColorBox_multis != []:
