@@ -3,6 +3,7 @@ import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcvfs
+import re
 from threading import Thread
 ADDON =             xbmcaddon.Addon()
 ADDON_VERSION =     ADDON.getAddonInfo('version')
@@ -51,9 +52,9 @@ class ColorBoxMain:
             Utils.Show_Percentage()
             #HOME.setProperty('WidgetNameLabelVar', xbmc.getInfoLabel("Control.GetLabel(7973)").replace("[CR]", " "))
             #HOME.setProperty('HomeHeaderSubline', xbmc.getInfoLabel("Control.GetLabel(7974)").replace("[CR]", " "))
-            HOME.setProperty('LabelFilterTWO', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7972)")))
-            HOME.setProperty('LabelFilterTHREE', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7973)")))
-            HOME.setProperty('LabelFilterFOUR', reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7974)")))
+            HOME.setProperty('LabelFilterTWO', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7972)")).strip()))
+            HOME.setProperty('LabelFilterTHREE', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7973)")).strip()))
+            HOME.setProperty('LabelFilterFOUR', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7974)")).strip()))
             FIVE_daemon_set = HOME.getProperty("FIVE_daemon_set")
             if not FIVE_daemon_set == 'None':
                 self.image_now_FIVE = xbmc.getInfoLabel("Control.GetLabel(7975)")
