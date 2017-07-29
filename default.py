@@ -26,7 +26,8 @@ ColorBox_function_map = {
         'fakelight':    Utils.fakelight,
         'twotone':      Utils.twotone,
         'posterize':    Utils.posterize,
-        'distort':      Utils.distort}
+        'distort':      Utils.distort,
+        'dataglitch':   Utils.dataglitch}
 ColorBox_settings_map = {
         'pixelsize':    Utils.set_pixelsize,
         'bitsize':      Utils.set_bitsize,

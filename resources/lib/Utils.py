@@ -16,6 +16,7 @@ from xml.dom.minidom import parse
 import time
 from threading import Thread
 from random import shuffle
+from collections import deque
 ADDON =             xbmcaddon.Addon()
 ADDON_ID =          ADDON.getAddonInfo('id')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
@@ -44,6 +45,7 @@ lightsize =         192
 black =             "#000000"
 white =             "#ffffff"
 bits =              1
+doffset=            100
 quality =           8
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
@@ -190,6 +192,23 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     Black_White(imagecolor, cname)
     return imagecolor, cimagecolor
+def dataglitch(filterimage, channel='r'):
+    md5 = hashlib.md5(filterimage).hexdigest()
+    filename = md5 + "dataglitch" + str(doffset) + str(quality) + ".png"
+    targetfile = os.path.join(ADDON_DATA_PATH, filename)
+    if not xbmcvfs.exists(targetfile):
+        Img = Check_XBMC_Internal(targetfile, filterimage)
+        if Img == "":
+            return ""
+        img = Image.open(Img)
+        width, height = img.size
+        qwidth = width / quality
+        qheight = height / quality
+        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
+        img = img.convert('RGB')
+        img = Dataglitch_Image(img)
+        img.save(targetfile)
+    return targetfile
 def blur(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "blur" + str(radius) + str(quality) + ".png"
@@ -422,6 +441,17 @@ def Pixelate_Image(img):
           pixel[i+r,j] = backgroundColor
           pixel[i,j+r] = backgroundColor
     return image
+def Dataglitch_Image(img, channel='r'):
+    img.load()
+    r, g, b = img.split()
+    eval_getdata = channel + ".getdata()"
+    channel_data = eval(eval_getdata)
+    channel_deque = deque(channel_data)
+    channel_deque.rotate(doffset)
+    eval_putdata = channel + ".putdata(channel_deque)"
+    eval(eval_putdata)
+    shifted_image = Image.merge('RGB', (r, g, b))
+    return shifted_image
 def Shiftblock_Image(image, blockSize=192, sigma=1.05, iterations=300):
     seed = random.random()
     r = random.Random(seed)
