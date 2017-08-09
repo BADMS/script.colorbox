@@ -192,7 +192,7 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     Black_White(imagecolor, cname)
     return imagecolor, cimagecolor
-def dataglitch(filterimage, channel='r'):
+def dataglitch(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "dataglitch" + str(doffset) + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
@@ -343,6 +343,25 @@ def distort(filterimage):
         img = image_distort(img,delta_x,delta_y)
         img.save(targetfile)
     return targetfile
+# Create a Half-tone version of the image
+def halftone(filterimage):
+    md5 = hashlib.md5(filterimage).hexdigest()
+    filename = md5 + "halftone" + str(quality) + ".png"
+    targetfile = os.path.join(ADDON_DATA_PATH, filename)
+    if not xbmcvfs.exists(targetfile):
+        Img = Check_XBMC_Internal(targetfile, filterimage)
+        if Img == "":
+            return ""
+        img = Image.open(Img)
+        # Get size
+        width, height = img.size
+        qwidth = width / quality
+        qheight = height / quality
+        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
+        img = img.convert('RGB')
+        img = Halftone_Image(img, qwidth, qheight)
+        img.save(targetfile)
+    return targetfile
 def Get_Colors(img, md5):
     if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:
@@ -447,7 +466,7 @@ def Dataglitch_Image(img, channel='r'):
     eval_getdata = channel + ".getdata()"
     channel_data = eval(eval_getdata)
     channel_deque = deque(channel_data)
-    channel_deque.rotate(doffset)
+    channel_deque.rotate(random.randint(doffset - (doffset*2), doffset))
     eval_putdata = channel + ".putdata(channel_deque)"
     eval(eval_putdata)
     shifted_image = Image.merge('RGB', (r, g, b))
@@ -468,6 +487,62 @@ def Shiftblock_Image(image, blockSize=192, sigma=1.05, iterations=300):
         # Now actually move the block
         image.paste(block, (bx+mx, by+my))
     return image
+# Get the pixel from the given image
+def get_pixel(image, i, j):
+    # Inside image bounds?
+    width, height = image.size
+    if i > width or j > height:
+        return None
+    # Get Pixel
+    pixel = image.getpixel((i, j))
+    return pixel
+def Halftone_Image(image, qw, qh):
+    # Create new Image and a Pixel Map
+    new = Image.new("RGB", (qw, qh), "white")
+    pixels = new.load()
+    # Transform to half tones
+    for i in range(0, qw, 2):
+        for j in range(0, qh, 2):
+            # Get Pixels
+            p1 = get_pixel(image, i, j)
+            p2 = get_pixel(image, i, j + 1)
+            p3 = get_pixel(image, i + 1, j)
+            p4 = get_pixel(image, i + 1, j + 1)
+            # Transform to grayscale
+            gray1 = (p1[0] * 0.299) + (p1[1] * 0.587) + (p1[2] * 0.114)
+            gray2 = (p2[0] * 0.299) + (p2[1] * 0.587) + (p2[2] * 0.114)
+            gray3 = (p3[0] * 0.299) + (p3[1] * 0.587) + (p3[2] * 0.114)
+            gray4 = (p4[0] * 0.299) + (p4[1] * 0.587) + (p4[2] * 0.114)
+            # Saturation Percentage
+            sat = (gray1 + gray2 + gray3 + gray4) / 4
+            # Draw white/black depending on saturation
+            if sat > 223:
+                pixels[i, j]         = (255, 255, 255) # White
+                pixels[i, j + 1]     = (255, 255, 255) # White
+                pixels[i + 1, j]     = (255, 255, 255) # White
+                pixels[i + 1, j + 1] = (255, 255, 255) # White
+            elif sat > 159:
+                pixels[i, j]         = (255, 255, 255) # White
+                pixels[i, j + 1]     = (0, 0, 0)       # Black
+                pixels[i + 1, j]     = (255, 255, 255) # White
+                pixels[i + 1, j + 1] = (255, 255, 255) # White
+            elif sat > 95:
+                pixels[i, j]         = (255, 255, 255) # White
+                pixels[i, j + 1]     = (0, 0, 0)       # Black
+                pixels[i + 1, j]     = (0, 0, 0)       # Black
+                pixels[i + 1, j + 1] = (255, 255, 255) # White
+            elif sat > 32:
+                pixels[i, j]         = (0, 0, 0)       # Black
+                pixels[i, j + 1]     = (255, 255, 255) # White
+                pixels[i + 1, j]     = (0, 0, 0)       # Black
+                pixels[i + 1, j + 1] = (0, 0, 0)       # Black
+            else:
+                pixels[i, j]         = (0, 0, 0)       # Black
+                pixels[i, j + 1]     = (0, 0, 0)       # Black
+                pixels[i + 1, j]     = (0, 0, 0)       # Black
+                pixels[i + 1, j + 1] = (0, 0, 0)       # Black
+    # Return new image
+    return new
 # Sorts a given row of pixels
 def sort_interval(interval):
 	if interval == []:
