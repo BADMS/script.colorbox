@@ -156,7 +156,7 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
         if not xbmcvfs.exists(targetfile):
             Img = Check_XBMC_Internal(targetfile, filterimage)
-            if Img == "":
+            if not Img:
                 return "", ""
             img = Image.open(Img)
             img.thumbnail((200, 200))
@@ -181,7 +181,7 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
         if not xbmcvfs.exists(targetfile):
             Img = Check_XBMC_Internal(targetfile, filterimage)
-            if Img == "":
+            if not Img:
                 return "", ""
             img = Image.open(Img)
             img.thumbnail((200, 200))
@@ -198,7 +198,7 @@ def dataglitch(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         width, height = img.size
@@ -215,7 +215,7 @@ def blur(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         width, height = img.size
@@ -233,7 +233,7 @@ def pixelate(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         img = Pixelate_Image(img)
@@ -245,7 +245,7 @@ def shiftblock(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         qiterations = iterations / quality
         img = Image.open(Img)
@@ -279,7 +279,7 @@ def pixelshift(filterimage, ptype="none"):
     randomness = float(prandomness)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         width, height = img.size
@@ -296,7 +296,7 @@ def fakelight(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         img = fake_light(img,lightsize)
@@ -308,7 +308,7 @@ def twotone(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         img = image_recolorize(img,black,white)
@@ -320,7 +320,7 @@ def posterize(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         img = image_posterize(img,bits)
@@ -332,7 +332,7 @@ def distort(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         width, height = img.size
@@ -350,16 +350,41 @@ def halftone(filterimage):
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
     if not xbmcvfs.exists(targetfile):
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if Img == "":
+        if not Img:
             return ""
         img = Image.open(Img)
         # Get size
         width, height = img.size
         qwidth = width / quality
         qheight = height / quality
-        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
-        img = img.convert('RGB')
-        img = Halftone_Image(img, qwidth, qheight)
+        if qwidth % 2 != 0:
+            qwidth += 1
+        if qheight % 2 != 0:
+            qheight += 1
+        img.resize((qwidth, qheight), Image.ANTIALIAS)
+        img = Halftone_Image(img,qwidth,qheight)
+        img.save(targetfile)
+    return targetfile
+# Create a dither version of the image
+def dither(filterimage):
+    md5 = hashlib.md5(filterimage).hexdigest()
+    filename = md5 + "dither" + str(quality) + ".png"
+    targetfile = os.path.join(ADDON_DATA_PATH, filename)
+    if not xbmcvfs.exists(targetfile):
+        Img = Check_XBMC_Internal(targetfile, filterimage)
+        if not Img:
+            return ""
+        img = Image.open(Img)
+        # Get size
+        width, height = img.size
+        qwidth = width / quality
+        qheight = height / quality
+        if qwidth % 2 != 0:
+            qwidth += 1
+        if qheight % 2 != 0:
+            qheight += 1
+        img.resize((qwidth, qheight), Image.ANTIALIAS)
+        img = Dither_Image(img,qwidth,qheight)
         img.save(targetfile)
     return targetfile
 def Get_Colors(img, md5):
@@ -389,7 +414,6 @@ def Check_XBMC_Internal(targetfile, filterimage):
     cachedthumb = xbmc.getCacheThumbName(filterimage)
     xbmc_vid_cache_file = os.path.join("special://profile/Thumbnails/Video", cachedthumb[0], cachedthumb)
     xbmc_cache_file = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
-    img = None
     for i in range(1, 4):
         if xbmcvfs.exists(xbmc_cache_file):
             return xbmc.translatePath(xbmc_cache_file)
@@ -402,8 +426,7 @@ def Check_XBMC_Internal(targetfile, filterimage):
             xbmcvfs.copy(filterimage, targetfile)
             return targetfile
             #return filterimage
-    if not img:
-        return ""
+    return
 def Get_Frequent_Color(img):
     w, h = img.size
     pixels = img.getcolors(w * h)
@@ -490,16 +513,34 @@ def Shiftblock_Image(image, blockSize=192, sigma=1.05, iterations=300):
 # Get the pixel from the given image
 def get_pixel(image, i, j):
     # Inside image bounds?
-    width, height = image.size
-    if i > width or j > height:
+    gw, gh = image.size
+    if i > gw or j > gh:
         return None
     # Get Pixel
-    pixel = image.getpixel((i, j))
-    return pixel
+    gp = image.getpixel((i, j))
+    return gp
+# Return color value depending on quadrant and saturation
+def get_saturation(gv, gq):
+    if gv > 223:
+        return 255
+    elif gv > 159:
+        if gq != 1:
+            return 255
+        return 0
+    elif gv > 95:
+        if gq == 0 or gq == 3:
+            return 255
+        return 0
+    elif gv > 32:
+        if gq == 1:
+            return 255
+        return 0
+    else:
+        return 0
 def Halftone_Image(image, qw, qh):
     # Create new Image and a Pixel Map
-    new = Image.new("RGB", (qw, qh), "white")
-    pixels = new.load()
+    hinew = Image.new("RGBA", (qw, qh), "white")
+    hipixels = hinew.load()
     # Transform to half tones
     for i in range(0, qw, 2):
         for j in range(0, qh, 2):
@@ -517,32 +558,64 @@ def Halftone_Image(image, qw, qh):
             sat = (gray1 + gray2 + gray3 + gray4) / 4
             # Draw white/black depending on saturation
             if sat > 223:
-                pixels[i, j]         = (255, 255, 255) # White
-                pixels[i, j + 1]     = (255, 255, 255) # White
-                pixels[i + 1, j]     = (255, 255, 255) # White
-                pixels[i + 1, j + 1] = (255, 255, 255) # White
+                hipixels[i, j]         = (255, 255, 255) # White
+                hipixels[i, j + 1]     = (255, 255, 255) # White
+                hipixels[i + 1, j]     = (255, 255, 255) # White
+                hipixels[i + 1, j + 1] = (255, 255, 255) # White
             elif sat > 159:
-                pixels[i, j]         = (255, 255, 255) # White
-                pixels[i, j + 1]     = (0, 0, 0)       # Black
-                pixels[i + 1, j]     = (255, 255, 255) # White
-                pixels[i + 1, j + 1] = (255, 255, 255) # White
+                hipixels[i, j]         = (255, 255, 255) # White
+                hipixels[i, j + 1]     = (0, 0, 0)       # Black
+                hipixels[i + 1, j]     = (255, 255, 255) # White
+                hipixels[i + 1, j + 1] = (255, 255, 255) # White
             elif sat > 95:
-                pixels[i, j]         = (255, 255, 255) # White
-                pixels[i, j + 1]     = (0, 0, 0)       # Black
-                pixels[i + 1, j]     = (0, 0, 0)       # Black
-                pixels[i + 1, j + 1] = (255, 255, 255) # White
+                hipixels[i, j]         = (255, 255, 255) # White
+                hipixels[i, j + 1]     = (0, 0, 0)       # Black
+                hipixels[i + 1, j]     = (0, 0, 0)       # Black
+                hipixels[i + 1, j + 1] = (255, 255, 255) # White
             elif sat > 32:
-                pixels[i, j]         = (0, 0, 0)       # Black
-                pixels[i, j + 1]     = (255, 255, 255) # White
-                pixels[i + 1, j]     = (0, 0, 0)       # Black
-                pixels[i + 1, j + 1] = (0, 0, 0)       # Black
+                hipixels[i, j]         = (0, 0, 0)       # Black
+                hipixels[i, j + 1]     = (255, 255, 255) # White
+                hipixels[i + 1, j]     = (0, 0, 0)       # Black
+                hipixels[i + 1, j + 1] = (0, 0, 0)       # Black
             else:
-                pixels[i, j]         = (0, 0, 0)       # Black
-                pixels[i, j + 1]     = (0, 0, 0)       # Black
-                pixels[i + 1, j]     = (0, 0, 0)       # Black
-                pixels[i + 1, j + 1] = (0, 0, 0)       # Black
+                hipixels[i, j]         = (0, 0, 0)       # Black
+                hipixels[i, j + 1]     = (0, 0, 0)       # Black
+                hipixels[i + 1, j]     = (0, 0, 0)       # Black
+                hipixels[i + 1, j + 1] = (0, 0, 0)       # Black
     # Return new image
-    return new
+    return hinew
+def Dither_Image(image, qw, qh):
+    # Create new Image and a Pixel Map
+    dinew = Image.new("RGBA", (qw, qh), "white")
+    dipixels = dinew.load()
+    # Transform to half tones
+    for i in range(0, qw, 2):
+        for j in range(0, qh, 2):
+            # Get Pixels
+            p1 = get_pixel(image, i, j)
+            p2 = get_pixel(image, i, j + 1)
+            p3 = get_pixel(image, i + 1, j)
+            p4 = get_pixel(image, i + 1, j + 1)
+            # Color Saturation by RGB channel
+            red   = (p1[0] + p2[0] + p3[0] + p4[0]) / 4
+            green = (p1[1] + p2[1] + p3[1] + p4[1]) / 4
+            blue  = (p1[2] + p2[2] + p3[2] + p4[2]) / 4
+            # Results by channel
+            r = [0, 0, 0, 0]
+            g = [0, 0, 0, 0]
+            b = [0, 0, 0, 0]
+            # Get Quadrant Color
+            for x in range(0, 4):
+                r[x] = get_saturation(red, x)
+                g[x] = get_saturation(green, x)
+                b[x] = get_saturation(blue, x)
+            # Set Dithered Colors
+            dipixels[i, j]         = (r[0], g[0], b[0])
+            dipixels[i, j + 1]     = (r[1], g[1], b[1])
+            dipixels[i + 1, j]     = (r[2], g[2], b[2])
+            dipixels[i + 1, j + 1] = (r[3], g[3], b[3])
+    # Return new image
+    return dinew
 # Sorts a given row of pixels
 def sort_interval(interval):
 	if interval == []:

@@ -28,6 +28,7 @@ ColorBox_function_map = {
         'posterize':    Utils.posterize,
         'distort':      Utils.distort,
         'halftone':     Utils.halftone,
+        'dither':       Utils.dither,
         'dataglitch':   Utils.dataglitch}
 ColorBox_settings_map = {
         'pixelsize':    Utils.set_pixelsize,
@@ -72,8 +73,8 @@ class ColorBoxMain:
                         HOME.setProperty('Daemon_FIVE_ImageUpdating', '1')
                         tm1 = Thread(target=Utils.Color_Only, args=(self.image_now_FIVE, "ImageColorFIVE", "ImageCColorFIVE"))
                         tm1.start()
-                    except:
-                        Utils.log("Could not process image for FIVE daemon")
+                    except Exception as e:
+                        Utils.log("5err: %s img: %s" % (e,self.image_now_FIVE))
             cfa_daemon_set = HOME.getProperty("cfa_daemon_set")
             #curr_window = xbmc.getInfoLabel("Window.Property(xmlfile)")
             if not cfa_daemon_set == '':
@@ -89,8 +90,8 @@ class ColorBoxMain:
                         HOME.setProperty('DaemonFanartImageUpdating', '1')
                         tf = Thread(target=Utils.Color_Only, args=(self.image_now_cfa, "ImageColorcfa", "ImageCColorcfa"))
                         tf.start()
-                    except:
-                        Utils.log("Could not process image for cfa daemon")
+                    except Exception as e:
+                        Utils.log("cerr: %s img: %s" % (e,self.image_now_cfa))
             if not HOME.getProperty("SEVEN_daemon_set") == '':
                 self.image_now_SEVEN = xbmc.getInfoLabel("Control.GetLabel(7977)")
                 if self.image_now_SEVEN != self.image_prev_SEVEN and self.image_now_SEVEN != "":
@@ -100,8 +101,8 @@ class ColorBoxMain:
                         HOME.setProperty("OldImageCColorSEVEN", HOME.getProperty("ImageCColorSEVEN"))
                         tm3 = Thread(target=Utils.Color_Only, args=(self.image_now_SEVEN, "ImageColorSEVEN", "ImageCColorSEVEN"))
                         tm3.start()
-                    except:
-                        Utils.log("Could not process image for SEVEN daemon")
+                    except Exception as e:
+                        Utils.log("7err: %s img: %s" % (e,self.image_now_SEVEN))
             if not HOME.getProperty("EIGHT_daemon_set") == '':
                 self.image_now_EIGHT = xbmc.getInfoLabel("Control.GetLabel(7978)")
                 if self.image_now_EIGHT != self.image_prev_EIGHT and self.image_now_EIGHT != "" or HOME.getProperty("EIGHT_daemon_fire"):
@@ -116,8 +117,8 @@ class ColorBoxMain:
                         HOME.setProperty('Daemon_EIGHT_ImageUpdating', '1')
                         tm4 = Thread(target=Utils.Color_Only, args=(self.image_now_EIGHT, "ImageColorEIGHT", "ImageCColorEIGHT"))
                         tm4.start()
-                    except:
-                        Utils.log("Could not process image for EIGHT daemon")
+                    except Exception as e:
+                        Utils.log("8err: %s img: %s" % (e,self.image_now_EIGHT))
             self.manual_set_NINE = HOME.getProperty("NINE_manual_set")
             if self.manual_set_NINE != '' and self.manual_set_NINE != self.prefix_prev_NINE or HOME.getProperty("NINE_daemon_fire"):
                 try:
@@ -154,8 +155,8 @@ class ColorBoxMain:
                         elif self.var != "":
                             #change various settings
                             ColorBox_settings_map[self.var](self.set)
-                except:
-                    Utils.log("Could not process image for NINE daemon")
+                except Exception as e:
+                    Utils.log("9err: %s img: %s" % (e,self.manual_set_NINE))
             if self.ColorBox_multis != []:
                 for line in self.ColorBox_multis:
                     self.idm, self.wpnam, self.mfx = line.strip().split('|')
@@ -167,8 +168,8 @@ class ColorBoxMain:
                             imagecolor, cimagecolor = Utils.Color_Only_Manual(self.image_now_MULTI, self.wpnam + "ImageColor")
                             HOME.setProperty(self.wpnam + "ImageColor", imagecolor)
                             HOME.setProperty(self.wpnam + "ImageCColor", cimagecolor)
-                        except:
-                            Utils.log("Could not process image for image_now_MULTI daemon %s" % self.wpnam)
+                        except Exception as e:
+                            Utils.log("merr: %s img: %s" % (e,self.ColorBox_multis))
             monitor.waitForAbort(0.2)
     def _init_vars(self):
         HOME.setProperty("OldImageColorFIVE", "FFffffff")
@@ -269,11 +270,8 @@ if __name__ == "__main__":
         us1 = Thread(target=Utils.Shuffle_Set, args=(idm,varm))
         us1.start()
     elif infom != "" and idm != "":
-        try:
-            HOME.setProperty(prefixm + "ImageFilter", ColorBox_function_map[infom](idm))
-            HOME.setProperty(prefixm + "Image", idm)
-            imagecolor, cimagecolor = Utils.Color_Only_Manual(idm, prefixm + "ImageColor")
-            HOME.setProperty(prefixm + "ImageColor", imagecolor)
-            HOME.setProperty(prefixm + "ImageCColor", cimagecolor)
-        except:
-            Utils.log("Could not process image for go_RUNSCRIPT_COLORBOX")
+        HOME.setProperty(prefixm + "ImageFilter", ColorBox_function_map[infom](idm))
+        HOME.setProperty(prefixm + "Image", idm)
+        imagecolor, cimagecolor = Utils.Color_Only_Manual(idm, prefixm + "ImageColor")
+        HOME.setProperty(prefixm + "ImageColor", imagecolor)
+        HOME.setProperty(prefixm + "ImageCColor", cimagecolor)
