@@ -361,7 +361,7 @@ def halftone(filterimage):
             qwidth += 1
         if qheight % 2 != 0:
             qheight += 1
-        img.resize((qwidth, qheight), Image.ANTIALIAS)
+        img = img.resize((qwidth, qheight), Image.ANTIALIAS)
         img = Halftone_Image(img,qwidth,qheight)
         img.save(targetfile)
     return targetfile
@@ -383,7 +383,7 @@ def dither(filterimage):
             qwidth += 1
         if qheight % 2 != 0:
             qheight += 1
-        img.resize((qwidth, qheight), Image.ANTIALIAS)
+        img = img.resize((qwidth, qheight), Image.ANTIALIAS)
         img = Dither_Image(img,qwidth,qheight)
         img.save(targetfile)
     return targetfile
@@ -400,12 +400,12 @@ def Get_Colors(img, md5):
             colour_tuple[channel] = clamp(sum(values) / len(values))
         imagecolor = 'ff%02x%02x%02x' % tuple(colour_tuple)
         cimagecolor = Complementary_Color(imagecolor)
-        #color = hex_to_RGB(imagecolor)
-        #comp = hex_to_RGB(cimagecolor)
-        #contrast = "{:.0f}".format((int(color[0]) * 0.299) + (int(color[1]) * 0.587) + (int(color[2]) * 0.144))
-        #ccontrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
-        #if abs(int(contrast)-int(ccontrast)) < 50:
-        #    cimagecolor = RGB_to_hex("{:.0f}".format(clamp(int(comp[0]) - 50) + clamp(int(comp[1]) - 50) + clamp(int(comp[2]) - 50)))
+        color = hex_to_RGB(imagecolor)
+        comp = hex_to_RGB(cimagecolor)
+        contrast = "{:.0f}".format((int(color[0]) * 0.299) + (int(color[1]) * 0.587) + (int(color[2]) * 0.144))
+        ccontrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
+        if abs(int(contrast)-int(ccontrast)) < 20:
+            cimagecolor = RGB_to_hex("{:.0f}".format(clamp(int(comp[0]) + 20) + clamp(int(comp[1]) + 20) + clamp(int(comp[2]) + 20)))
         Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
