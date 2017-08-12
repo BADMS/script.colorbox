@@ -9,6 +9,7 @@ import hashlib
 import urllib
 import random
 import math
+#import colorsys
 from PIL import Image, ImageOps, ImageEnhance, ImageDraw, ImageStat, ImageFilter
 from ImageOperations import MyGaussianBlur
 from decimal import *
@@ -47,6 +48,9 @@ white =             "#ffffff"
 bits =              1
 doffset=            100
 quality =           8
+color_bump =        -8
+color_comp =        "hue" #comp, bump, hue
+color_hsv =         (0, -0.3, 0.2)
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def set_quality(new_value):
@@ -73,6 +77,19 @@ def set_white(new_value):
     global white
     white = "#" + str(new_value)
     xbmc.executebuiltin('Skin.SetString(colorbox_white,'+str(new_value)+')')
+def set_bump(new_value):
+    global color_bump
+    color_bump = int(new_value)
+    xbmc.executebuiltin('Skin.SetString(colorbox_bump,'+str(new_value)+')')
+def set_comp(new_value):
+    global color_comp
+    color_comp = str(new_value)
+    xbmc.executebuiltin('Skin.SetString(colorbox_comp,'+str(new_value)+')')
+def set_hsv(new_value):
+    global color_hsv
+    new_value = new_value.strip().split(';')
+    color_hsv = (float(new_value[0]), float(new_value[1]), float(new_value[2]))
+    xbmc.executebuiltin('Skin.SetString(colorbox_hsv,'+str(new_value)+')')
 def Shuffle_Set(amount,timed=40):
     timed = int(timed) / 1000.0
     board = [[i] for i in range(int(amount))]
@@ -116,6 +133,19 @@ def Complementary_Color(hex_color):
             return "FFc2836d"
     """
     return "FF" + "%s" % ''.join(comp)
+def Complementary_Color_Modify(im_color, com_color):
+    irgb = [im_color[2:4], im_color[4:6], im_color[6:8]]
+    crgb = [com_color[2:4], com_color[4:6], com_color[6:8]]
+    if color_comp == "bump":
+        return ''.join(RGB_to_hex((clamp(int(crgb[0], 16) + color_bump), clamp(int(crgb[1], 16) + color_bump), clamp(int(crgb[2], 16) + color_bump))))
+    elif color_comp == "hue":
+        #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
+        hsv = rgb_to_hsv(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+        #HOME.setProperty('rhsv', str(hsv))
+        hsv = hsv_to_rgb((hsv[0]+color_hsv[0]), (hsv[1]+color_hsv[1]), (hsv[2]+color_hsv[2]))
+        #HOME.setProperty('hhsv', str(color_hsv))
+        return RGB_to_hex(hsv)
+    return com_color
 def Black_White(hex_color, prop):
     """Set contrast for given color
     (red*0.299+green*0.587+blue*0.114)=x
@@ -400,16 +430,16 @@ def Get_Colors(img, md5):
             colour_tuple[channel] = clamp(sum(values) / len(values))
         imagecolor = 'ff%02x%02x%02x' % tuple(colour_tuple)
         cimagecolor = Complementary_Color(imagecolor)
-        color = hex_to_RGB(imagecolor)
-        comp = hex_to_RGB(cimagecolor)
-        contrast = "{:.0f}".format((int(color[0]) * 0.299) + (int(color[1]) * 0.587) + (int(color[2]) * 0.144))
-        ccontrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
-        if abs(int(contrast)-int(ccontrast)) < 20:
-            cimagecolor = RGB_to_hex("{:.0f}".format(clamp(int(comp[0]) + 20) + clamp(int(comp[1]) + 20) + clamp(int(comp[2]) + 20)))
+        #color = tuple(colour_tuple)
+        #comp = hex_to_RGB(cimagecolor)
+        #contrast = "{:.0f}".format((int(colour_tuple[0]) * 0.299) + (int(colour_tuple[1]) * 0.587) + (int(colour_tuple[2]) * 0.144))
+        #ccontrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
+        #if abs(int(contrast)-int(ccontrast)) < 20:
+        #   cimagecolor = RGB_to_hex((clamp(int(tuple(colour_tuple)[0]) + color_bump), clamp(int(tuple(colour_tuple)[1]) + color_bump), clamp(int(tuple(colour_tuple)[2]) + color_bump)))
         Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
-    return imagecolor, cimagecolor
+    return imagecolor, Complementary_Color_Modify(imagecolor, cimagecolor)
 def Check_XBMC_Internal(targetfile, filterimage):
     cachedthumb = xbmc.getCacheThumbName(filterimage)
     xbmc_vid_cache_file = os.path.join("special://profile/Thumbnails/Video", cachedthumb[0], cachedthumb)
@@ -842,6 +872,59 @@ def image_distort(img, delta_x=50, delta_y=90):
             # do the shuffling
             output_img[x,y] = img_data[tuple(pix)]
     return output
+'''def rgb2hsv(hsv):
+    return colorsys.rgb_to_hsv(hsv)
+def hsv2rgb(rgb):
+    return colorsys.rgb_to_hsv(rgb)'''
+def rgb_to_hsv(r, g, b):
+    maxc = max(r, g, b)
+    minc = min(r, g, b)
+    v = maxc
+    if minc == maxc:
+        return 0.0, 0.0, v
+    s = (maxc-minc) / maxc
+    rc = (maxc-r) / (maxc-minc)
+    gc = (maxc-g) / (maxc-minc)
+    bc = (maxc-b) / (maxc-minc)
+    if r == maxc:
+        h = bc-gc
+    elif g == maxc:
+        h = 2.0+rc-bc
+    else:
+        h = 4.0+gc-rc
+    h = (h/6.0) % 1.0
+    return h, s, v
+def hsv_to_rgb(h, s, v):
+    if s == 0.0: v*=255; return (int(v), int(v), int(v))
+    i = int(h*6.) # XXX assume int() truncates!
+    f = (h*6.)-i; p,q,t = int(255*(v*(1.-s))), int(255*(v*(1.-s*f))), int(255*(v*(1.-s*(1.-f)))); v*=255; i%=6
+    if i == 0: return (int(v), int(t), int(p))
+    if i == 1: return (int(q), int(v), int(p))
+    if i == 2: return (int(p), int(v), int(t))
+    if i == 3: return (int(p), int(q), int(v))
+    if i == 4: return (int(t), int(p), int(v))
+    if i == 5: return (int(v), int(p), int(q))
+'''def hsv_to_rgb(h, s, v):
+    if s == 0.0:
+        return v, v, v
+    i = int(h*6.0) # XXX assume int() truncates!
+    f = (h*6.0) - i
+    p = v*(1.0 - s)
+    q = v*(1.0 - s*f)
+    t = v*(1.0 - s*(1.0-f))
+    i = i%6
+    if i == 0:
+        return v, t, p
+    if i == 1:
+        return q, v, p
+    if i == 2:
+        return p, v, t
+    if i == 3:
+        return p, q, v
+    if i == 4:
+        return t, p, v
+    if i == 5:
+        return v, p, q'''
 def Load_Colors_Dict():
     try:
         with open(ADDON_COLORS) as file:

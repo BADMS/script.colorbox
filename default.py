@@ -36,6 +36,9 @@ ColorBox_settings_map = {
         'blursize':     Utils.set_blursize,
         'black':        Utils.set_black,
         'white':        Utils.set_white,
+        'hsv':          Utils.set_hsv,
+        'comp':         Utils.set_comp,
+        'bump':         Utils.set_bump,
         'quality':      Utils.set_quality}
 ColorBox_strip =        ('[CR]', ' '), ('<BR>', ' '), ('<br>', ' '), ('&#10;', ' '), ('&&#10;', ' ')
 #ColorBox_strip =       ('[B]', ''), ('[/B]', ''), ('[CR]', ' ')
