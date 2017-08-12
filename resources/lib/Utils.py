@@ -139,11 +139,11 @@ def Complementary_Color_Modify(im_color, com_color):
     if color_comp == "bump":
         return ''.join(RGB_to_hex((clamp(int(crgb[0], 16) + color_bump), clamp(int(crgb[1], 16) + color_bump), clamp(int(crgb[2], 16) + color_bump))))
     elif color_comp == "hue":
-        #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
+        HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
         hsv = rgb_to_hsv(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
-        #HOME.setProperty('rhsv', str(hsv))
+        HOME.setProperty('rhsv', str(hsv))
         hsv = hsv_to_rgb((hsv[0]+color_hsv[0]), (hsv[1]+color_hsv[1]), (hsv[2]+color_hsv[2]))
-        #HOME.setProperty('hhsv', str(color_hsv))
+        HOME.setProperty('hhsv', str(color_hsv))
         return RGB_to_hex(hsv)
     return com_color
 def Black_White(hex_color, prop):
@@ -196,6 +196,7 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     Black_White(imagecolor, cname)
+    cimagecolor = Complementary_Color_Modify(imagecolor, cimagecolor)
     tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 0.01, var3))
     tmc.start()
     tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 0.01, var4))
@@ -221,7 +222,7 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     Black_White(imagecolor, cname)
-    return imagecolor, cimagecolor
+    return imagecolor, Complementary_Color_Modify(imagecolor, cimagecolor)
 def dataglitch(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "dataglitch" + str(doffset) + str(quality) + ".png"
