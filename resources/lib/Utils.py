@@ -139,11 +139,11 @@ def Complementary_Color_Modify(im_color, com_color):
     if color_comp == "bump":
         return ''.join(RGB_to_hex((clamp(int(crgb[0], 16) + color_bump), clamp(int(crgb[1], 16) + color_bump), clamp(int(crgb[2], 16) + color_bump))))
     elif color_comp == "hue":
-        HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
+        #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
         hsv = rgb_to_hsv(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
-        HOME.setProperty('rhsv', str(hsv))
+        #HOME.setProperty('rhsv', str(hsv))
         hsv = hsv_to_rgb((hsv[0]+color_hsv[0]), (hsv[1]+color_hsv[1]), (hsv[2]+color_hsv[2]))
-        HOME.setProperty('hhsv', str(color_hsv))
+        #HOME.setProperty('hhsv', str(color_hsv))
         return RGB_to_hex(hsv)
     return com_color
 def Black_White(hex_color, prop):
