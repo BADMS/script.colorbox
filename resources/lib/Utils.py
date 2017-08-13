@@ -25,6 +25,9 @@ ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_dat
 ADDON_COLORS =      os.path.join(ADDON_DATA_PATH, "colors.txt")
 #ADDON_SETTINGS =    os.path.join(ADDON_DATA_PATH, "settings.")
 HOME =              xbmcgui.Window(10000)
+ONE_THIRD =         1.0/3.0
+ONE_SIXTH =         1.0/6.0
+TWO_THIRD =         2.0/3.0
 black_pixel =       (0, 0, 0, 255)
 white_pixel =       (255, 255, 255, 255)
 randomness =        (0)
@@ -49,8 +52,9 @@ bits =              1
 doffset=            100
 quality =           8
 color_bump =        -8
-color_comp =        "hue" #comp, bump, hue
-color_hsv =         (0, -0.3, 0.2)
+color_comp =        "hue" #comp, bump, hue, light
+color_hsv =         (0.0, -0.3, 0.2) #NOT < 0.0 | > 1.0
+color_hls =         (0.0, -0.1, 0.0) #NOT < 0.0 | > 1.0
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def set_quality(new_value):
@@ -124,15 +128,17 @@ def Complementary_Color(hex_color):
     >>>complementaryColor('FFFFFF')
     '000000'
     """
-    rgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
-    comp = ['%02X' % (255 - int(a, 16)) for a in rgb]
+    irgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
+    hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+    hls = hls_to_rgb(abs(1-hls[0]), abs(hls[1]+color_hls[1]), abs(hls[2]+color_hls[2]))
+    return RGB_to_hex(hls)
     """
     if (int(comp[0], 16) > 99 and int(comp[0], 16) < 150 and
         int(comp[1], 16) > 99 and int(comp[1], 16) < 150 and
         int(comp[2], 16) > 99 and int(comp[2], 16) < 150):
             return "FFc2836d"
     """
-    return "FF" + "%s" % ''.join(comp)
+    #return "FF" + "%s" % ''.join(comp)
 def Complementary_Color_Modify(im_color, com_color):
     irgb = [im_color[2:4], im_color[4:6], im_color[6:8]]
     crgb = [com_color[2:4], com_color[4:6], com_color[6:8]]
@@ -145,6 +151,13 @@ def Complementary_Color_Modify(im_color, com_color):
         hsv = hsv_to_rgb((hsv[0]+color_hsv[0]), (hsv[1]+color_hsv[1]), (hsv[2]+color_hsv[2]))
         #HOME.setProperty('hhsv', str(color_hsv))
         return RGB_to_hex(hsv)
+    elif color_comp == "light":
+        #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
+        hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+        #HOME.setProperty('rhsv', str(hls))
+        hls = hls_to_rgb(abs(hls[0]+color_hls[0]), abs(hls[1]+color_hls[1]), abs(hls[2]+color_hls[2]))
+        #HOME.setProperty('hhsv', str(hls))
+        return RGB_to_hex(hls)
     return com_color
 def Black_White(hex_color, prop):
     """Set contrast for given color
@@ -440,7 +453,7 @@ def Get_Colors(img, md5):
         Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
-    return imagecolor, Complementary_Color_Modify(imagecolor, cimagecolor)
+    return imagecolor, cimagecolor
 def Check_XBMC_Internal(targetfile, filterimage):
     cachedthumb = xbmc.getCacheThumbName(filterimage)
     xbmc_vid_cache_file = os.path.join("special://profile/Thumbnails/Video", cachedthumb[0], cachedthumb)
@@ -905,6 +918,50 @@ def hsv_to_rgb(h, s, v):
     if i == 3: return (int(p), int(q), int(v))
     if i == 4: return (int(t), int(p), int(v))
     if i == 5: return (int(v), int(p), int(q))
+# HLS: Hue, Luminance, Saturation
+# H: position in the spectrum
+# L: color lightness
+# S: color saturation
+def rgb_to_hls(r, g, b):
+    maxc = max(r, g, b)
+    minc = min(r, g, b)
+    # XXX Can optimize (maxc+minc) and (maxc-minc)
+    l = (minc+maxc)/2.0
+    if minc == maxc:
+        return 0.0, l, 0.0
+    if l <= 0.5:
+        s = (maxc-minc) / (maxc+minc)
+    else:
+        s = (maxc-minc) / (2.0-maxc-minc)
+    rc = (maxc-r) / (maxc-minc)
+    gc = (maxc-g) / (maxc-minc)
+    bc = (maxc-b) / (maxc-minc)
+    if r == maxc:
+        h = bc-gc
+    elif g == maxc:
+        h = 2.0+rc-bc
+    else:
+        h = 4.0+gc-rc
+    h = (h/6.0) % 1.0
+    return h, l, s
+def hls_to_rgb(h, l, s):
+    if s == 0.0:
+        return int(l*255), int(l*255), int(l*255)
+    if l <= 0.5:
+        m2 = l * (1.0+s)
+    else:
+        m2 = l+s-(l*s)
+    m1 = 2.0*l - m2
+    return (int(_v(m1, m2, h+ONE_THIRD)*255), int(_v(m1, m2, h)*255), int(_v(m1, m2, h-ONE_THIRD)*255))
+def _v(m1, m2, hue):
+    hue = hue % 1.0
+    if hue < ONE_SIXTH:
+        return m1 + (m2-m1)*hue*6.0
+    if hue < 0.5:
+        return m2
+    if hue < TWO_THIRD:
+        return m1 + (m2-m1)*(TWO_THIRD-hue)*6.0
+    return m1
 '''def hsv_to_rgb(h, s, v):
     if s == 0.0:
         return v, v, v
