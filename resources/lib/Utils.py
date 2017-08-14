@@ -53,8 +53,8 @@ doffset=            100
 quality =           8
 color_bump =        -8
 color_comp =        "hue" #comp, bump, hue, light, fix, fixboth
-color_hsv =         (0.0, -0.2, 0.2) #NOT < 0.0 | > 1.0
-color_hls =         (0.0, -0.1, -0.1) #NOT < 0.0 | > 1.0
+color_hsv =         (0.0, -0.2, 0.2) #NOT < 1.0 | > 1.0
+color_hls =         (0.0, 0.3, 0.2) #NOT < 1.0 | > 1.0
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def set_quality(new_value):
