@@ -163,7 +163,7 @@ class ColorBoxMain:
                     Utils.log("9err: %s img: %s" % (e,self.manual_set_NINE))
             if self.ColorBox_multis != []:
                 for line in self.ColorBox_multis:
-                    self.idm, self.wpnam, self.mfx = line.strip().split('|')
+                    self.idm, self.wpnam, self.mfx = line.strip().split(':')
                     self.image_now_MULTI = xbmc.getInfoLabel("Control.GetLabel(" + str(self.idm) + ")")
                     if self.image_now_MULTI != HOME.getProperty(self.wpnam) and self.image_now_MULTI != "":
                         try:
@@ -225,7 +225,7 @@ class ColorBoxMain:
                 continue
             elif arg.startswith('multis='):
                 self.multim = Utils.Remove_Quotes(arg[7:])
-                self.ColorBox_multis = self.multim.split(":")
+                self.ColorBox_multis = self.multim.split("|")
             elif arg.startswith('daemon='):
                 self.daemon = True
 class ColorBoxMonitor(xbmc.Monitor):

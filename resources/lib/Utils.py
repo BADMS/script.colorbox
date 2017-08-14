@@ -52,7 +52,7 @@ bits =              1
 doffset=            100
 quality =           8
 color_bump =        -8
-color_comp =        "hue" #comp, bump, hue, light, fix
+color_comp =        "hue" #comp, bump, hue, light, fix, fixboth
 color_hsv =         (0.0, -0.2, 0.2) #NOT < 0.0 | > 1.0
 color_hls =         (0.0, -0.1, -0.1) #NOT < 0.0 | > 1.0
 colors_dict =       {}
@@ -163,7 +163,7 @@ def Complementary_Color_Modify(im_color, com_color):
         hls = hls_to_rgb(abs(one_max_loop(hls[0]+color_hls[0])), abs(one_max_loop(hls[1]+color_hls[1])), abs(one_max_loop(hls[2]+color_hls[2])))
         #HOME.setProperty('hhsv', str(hls))
         return RGB_to_hex(hls)
-    elif color_comp == "fix":
+    elif color_comp == "fix" or color_comp == "fixboth":
         #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
         hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
         #HOME.setProperty('rhsv', str(hls))
@@ -173,7 +173,7 @@ def Complementary_Color_Modify(im_color, com_color):
     return com_color
 def Image_Color_Modify(im_color):
     irgb = [im_color[2:4], im_color[4:6], im_color[6:8]]
-    if color_comp == "fix":
+    if color_comp == "fixboth":
         #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
         hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
         #HOME.setProperty('rhsv', str(hls))
