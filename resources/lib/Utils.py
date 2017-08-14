@@ -52,9 +52,9 @@ bits =              1
 doffset=            100
 quality =           8
 color_bump =        -8
-color_comp =        "hue" #comp, bump, hue, light
-color_hsv =         (0.0, -0.3, 0.2) #NOT < 0.0 | > 1.0
-color_hls =         (0.0, -0.1, 0.0) #NOT < 0.0 | > 1.0
+color_comp =        "hue" #comp, bump, hue, light, fix
+color_hsv =         (0.0, -0.2, 0.2) #NOT < 0.0 | > 1.0
+color_hls =         (0.0, -0.1, -0.1) #NOT < 0.0 | > 1.0
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def set_quality(new_value):
@@ -94,6 +94,11 @@ def set_hsv(new_value):
     new_value = new_value.strip().split(';')
     color_hsv = (float(new_value[0]), float(new_value[1]), float(new_value[2]))
     xbmc.executebuiltin('Skin.SetString(colorbox_hsv,'+str(new_value)+')')
+def set_hls(new_value):
+    global color_hls
+    new_value = new_value.strip().split(';')
+    color_hls = (float(new_value[0]), float(new_value[1]), float(new_value[2]))
+    xbmc.executebuiltin('Skin.SetString(colorbox_hls,'+str(new_value)+')')
 def Shuffle_Set(amount,timed=40):
     timed = int(timed) / 1000.0
     board = [[i] for i in range(int(amount))]
@@ -130,7 +135,7 @@ def Complementary_Color(hex_color):
     """
     irgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
     hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
-    hls = hls_to_rgb(abs(1-hls[0]), abs(hls[1]+color_hls[1]), abs(hls[2]+color_hls[2]))
+    hls = hls_to_rgb(abs(one_max_loop(1.0-hls[0])), abs(one_max_loop(hls[1])), abs(one_max_loop(hls[2])))
     return RGB_to_hex(hls)
     """
     if (int(comp[0], 16) > 99 and int(comp[0], 16) < 150 and
@@ -148,17 +153,34 @@ def Complementary_Color_Modify(im_color, com_color):
         #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
         hsv = rgb_to_hsv(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
         #HOME.setProperty('rhsv', str(hsv))
-        hsv = hsv_to_rgb((hsv[0]+color_hsv[0]), (hsv[1]+color_hsv[1]), (hsv[2]+color_hsv[2]))
+        hsv = hsv_to_rgb(abs(one_max_loop(hsv[0]+color_hsv[0])), abs(one_max_loop(hsv[1]+color_hsv[1])), abs(one_max_loop(hsv[2]+color_hsv[2])))
         #HOME.setProperty('hhsv', str(color_hsv))
         return RGB_to_hex(hsv)
     elif color_comp == "light":
         #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
         hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
         #HOME.setProperty('rhsv', str(hls))
-        hls = hls_to_rgb(abs(hls[0]+color_hls[0]), abs(hls[1]+color_hls[1]), abs(hls[2]+color_hls[2]))
+        hls = hls_to_rgb(abs(one_max_loop(hls[0]+color_hls[0])), abs(one_max_loop(hls[1]+color_hls[1])), abs(one_max_loop(hls[2]+color_hls[2])))
+        #HOME.setProperty('hhsv', str(hls))
+        return RGB_to_hex(hls)
+    elif color_comp == "fix":
+        #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
+        hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+        #HOME.setProperty('rhsv', str(hls))
+        hls = hls_to_rgb(abs(one_max_loop(hls[0]+color_hls[0])), abs(one_max_loop(color_hls[1])), abs(one_max_loop(color_hls[2])))
         #HOME.setProperty('hhsv', str(hls))
         return RGB_to_hex(hls)
     return com_color
+def Image_Color_Modify(im_color):
+    irgb = [im_color[2:4], im_color[4:6], im_color[6:8]]
+    if color_comp == "fix":
+        #HOME.setProperty('ihsv', str((int(irgb[0], 16), int(irgb[1], 16), int(irgb[2], 16))))
+        hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+        #HOME.setProperty('rhsv', str(hls))
+        hls = hls_to_rgb(abs(one_max_loop(hls[0])), abs(one_max_loop(color_hls[1])), abs(one_max_loop(color_hls[2])))
+        #HOME.setProperty('hhsv', str(hls))
+        return RGB_to_hex(hls)
+    return im_color
 def Black_White(hex_color, prop):
     """Set contrast for given color
     (red*0.299+green*0.587+blue*0.114)=x
@@ -205,11 +227,11 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
             img.thumbnail((200, 200))
             img = img.convert('RGB')
             imagecolor, cimagecolor = Get_Colors(img, md5)
-            Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     Black_White(imagecolor, cname)
     cimagecolor = Complementary_Color_Modify(imagecolor, cimagecolor)
+    imagecolor = Image_Color_Modify(imagecolor)
     tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 0.01, var3))
     tmc.start()
     tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 0.01, var4))
@@ -231,11 +253,10 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
             img.thumbnail((200, 200))
             img = img.convert('RGB')
             imagecolor, cimagecolor = Get_Colors(img, md5)
-            Write_Colors_Dict(md5,imagecolor,cimagecolor)
     else:
         imagecolor, cimagecolor = colors_dict[md5].split(':')
     Black_White(imagecolor, cname)
-    return imagecolor, Complementary_Color_Modify(imagecolor, cimagecolor)
+    return Image_Color_Modify(imagecolor), Complementary_Color_Modify(imagecolor, cimagecolor)
 def dataglitch(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "dataglitch" + str(doffset) + str(quality) + ".png"
@@ -983,6 +1004,11 @@ def _v(m1, m2, hue):
         return t, p, v
     if i == 5:
         return v, p, q'''
+def one_max_loop(oml):
+    if oml > 1.0:
+        return oml - 1.0
+    else:
+        return oml
 def Load_Colors_Dict():
     try:
         with open(ADDON_COLORS) as file:

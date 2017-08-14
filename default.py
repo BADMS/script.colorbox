@@ -37,6 +37,7 @@ ColorBox_settings_map = {
         'black':        Utils.set_black,
         'white':        Utils.set_white,
         'hsv':          Utils.set_hsv,
+        'hls':          Utils.set_hls,
         'comp':         Utils.set_comp,
         'bump':         Utils.set_bump,
         'quality':      Utils.set_quality}
