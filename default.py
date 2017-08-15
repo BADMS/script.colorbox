@@ -57,8 +57,6 @@ class ColorBoxMain:
         monitor = xbmc.Monitor()
         while self.daemon and not monitor.abortRequested():
             Utils.Show_Percentage()
-            #HOME.setProperty('WidgetNameLabelVar', xbmc.getInfoLabel("Control.GetLabel(7973)").replace("[CR]", " "))
-            #HOME.setProperty('HomeHeaderSubline', xbmc.getInfoLabel("Control.GetLabel(7974)").replace("[CR]", " "))
             HOME.setProperty('LabelFilterTWO', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7972)")).strip()))
             HOME.setProperty('LabelFilterTHREE', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7973)")).strip()))
             HOME.setProperty('LabelFilterFOUR', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7974)")).strip()))
