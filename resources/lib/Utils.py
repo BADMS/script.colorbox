@@ -126,7 +126,7 @@ def Random_Color():
 def Complementary_Color(hex_color):
     irgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
     hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
-    hls = hls_to_rgb(abs((hls[0]+0.5)-1.0), hls[1], hls[2])
+    hls = hls_to_rgb(one_max_loop(hls[0]+0.5), hls[1], hls[2])
     return RGB_to_hex(hls)
 def Complementary_Color_Modify(im_color, com_color):
     irgb = [im_color[2:4], im_color[4:6], im_color[6:8]]
@@ -147,14 +147,14 @@ def Complementary_Color_Modify(im_color, com_color):
         return RGB_to_hex(hls)
     elif color_comp == "fixcomp":
         hls = rgb_to_hls(int(crgb[0], 16)/255., int(crgb[1], 16)/255., int(crgb[2], 16)/255.)
-        hls = hls_to_rgb(one_max_loop(hls[0]+color_hls[0]), one_max_loop(color_hls[1]), one_max_loop(color_hls[2]))
+        hls = hls_to_rgb(hls[0], color_hls[1], color_hls[2])
         return RGB_to_hex(hls)
     return com_color
 def Image_Color_Modify(im_color):
     irgb = [im_color[2:4], im_color[4:6], im_color[6:8]]
     if color_comp == "fixboth" or color_comp == "fixcomp":
         hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
-        hls = hls_to_rgb(one_max_loop(hls[0]), one_max_loop(color_hls[1]), one_max_loop(color_hls[2]))
+        hls = hls_to_rgb(hls[0], one_max_loop(color_hls[1]), one_max_loop(color_hls[2]))
         return RGB_to_hex(hls)
     return im_color
 def Black_White(hex_color, prop):
@@ -884,8 +884,13 @@ def _v(m1, m2, hue):
     if hue < TWO_THIRD:
         return m1 + (m2-m1)*(TWO_THIRD-hue)*6.0
     return m1
+#def one_max_loop(oml):
+#    return max(min(oml, 1.0), 0.0)
 def one_max_loop(oml):
-    return max(min(oml, 1.0), 0.0)
+    if abs(oml) > 1.0:
+        return abs(oml) - 1.0
+    else:
+        return abs(oml)
 def Load_Colors_Dict():
     try:
         with open(ADDON_COLORS) as file:
