@@ -53,7 +53,7 @@ quality =           8
 color_bump =        -8
 color_comp =        "comp" #comp, bump, hue, light, fix, fixboth, fixcomp
 color_hsv =         (0.0, -0.2, 0.2) #0->1
-color_hls =         (0.0, 0.3, 0.2) #0->1
+color_hls =         (0.0, 0.5, 0.5) #0->1
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def set_quality(new_value):
@@ -133,6 +133,10 @@ def Complementary_Color_Modify(im_color, com_color):
     crgb = [com_color[2:4], com_color[4:6], com_color[6:8]]
     if color_comp == "bump":
         return ''.join(RGB_to_hex((clamp(int(crgb[0], 16) + color_bump), clamp(int(crgb[1], 16) + color_bump), clamp(int(crgb[2], 16) + color_bump))))
+    elif color_comp == "fixbump":
+        hls = rgb_to_hls(clamp(int(crgb[0], 16) + color_bump)/255., clamp(int(crgb[1], 16) + color_bump)/255., clamp(int(crgb[2], 16) + color_bump)/255.)
+        hls = hls_to_rgb(one_max_loop(hls[0]+color_hls[0]), one_max_loop(color_hls[1]), one_max_loop(color_hls[2]))
+        return RGB_to_hex(hls)
     elif color_comp == "hue":
         hsv = rgb_to_hsv(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
         hsv = hsv_to_rgb(one_max_loop(hsv[0]+color_hsv[0]), one_max_loop(hsv[1]+color_hsv[1]), one_max_loop(hsv[2]+color_hsv[2]))
@@ -461,37 +465,24 @@ def Get_Frequent_Color(img):
 def clamp(x):
     return max(0, min(x, 255))
 def linear_gradient(cname, start_hex="000000", finish_hex="FFFFFF", n=10, sleep=0.005, s_thread_check=""):
-    ''' returns a gradient list of (n) colors between
-    two hex colors. start_hex and finish_hex
-    should be the full six-digit color string,
-    inlcuding the number sign ("#FFFFFF") '''
-    # Starting and ending colors in RGB form
     if start_hex == '' or finish_hex == '':
         return
     s = hex_to_RGB('#' + start_hex)
     f = hex_to_RGB('#' + finish_hex)
-    # Initilize a list of the output colors with the starting color
     RGB_list = [s]
-    # Calcuate a color at each evenly spaced value of t from 1 to n
     for t in range(1, n):
-        # Interpolate RGB vector for color at the current value of t
         if HOME.getProperty(s_thread_check)[2:8] != start_hex:
             return
         curr_vector = [
             int(s[j] + (float(t)/(n-1))*(f[j]-s[j]))
             for j in range(3)
         ]
-        # Add it to our list of output colors
         HOME.setProperty(cname, RGB_to_hex(curr_vector))
         time.sleep(sleep)
     return
 def hex_to_RGB(hex):
-    ''' "#FFFFFF" -> [255,255,255] '''
-    # Pass 16 to the integer function for change of base
     return [int(hex[i:i+2], 16) for i in range(1,6,2)]
 def RGB_to_hex(RGB):
-    ''' [255,255,255] -> "#FFFFFF" '''
-    # Components need to be integers for hex to make sense
     RGB = [int(x) for x in RGB]
     return "FF"+"".join(["0{0:x}".format(v) if v < 16 else "{0:x}".format(v) for v in RGB])
 def Pixelate_Image(img):
@@ -884,8 +875,6 @@ def _v(m1, m2, hue):
     if hue < TWO_THIRD:
         return m1 + (m2-m1)*(TWO_THIRD-hue)*6.0
     return m1
-#def one_max_loop(oml):
-#    return max(min(oml, 1.0), 0.0)
 def one_max_loop(oml):
     if abs(oml) > 1.0:
         return abs(oml) - 1.0
