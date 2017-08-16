@@ -51,7 +51,7 @@ bits =              1
 doffset=            100
 quality =           8
 color_bump =        -8
-color_comp =        "comp" #comp, bump, hue, light, fix, fixboth, fixcomp
+color_comp =        "comp" #comp, bump, hue, light, fix, fixboth, fixcomp, fixbump, fixmain
 color_hsv =         (0.0, -0.2, 0.2) #0->1
 color_hls =         (0.0, 0.5, 0.5) #0->1
 colors_dict =       {}
@@ -131,12 +131,12 @@ def Complementary_Color(hex_color):
 def Complementary_Color_Modify(im_color, com_color):
     irgb = [im_color[2:4], im_color[4:6], im_color[6:8]]
     crgb = [com_color[2:4], com_color[4:6], com_color[6:8]]
-    if color_comp == "bump":
-        return ''.join(RGB_to_hex((clamp(int(crgb[0], 16) + color_bump), clamp(int(crgb[1], 16) + color_bump), clamp(int(crgb[2], 16) + color_bump))))
-    elif color_comp == "fixbump":
+    if color_comp == "fixbump":
         hls = rgb_to_hls(clamp(int(crgb[0], 16) + color_bump)/255., clamp(int(crgb[1], 16) + color_bump)/255., clamp(int(crgb[2], 16) + color_bump)/255.)
         hls = hls_to_rgb(one_max_loop(hls[0]+color_hls[0]), one_max_loop(color_hls[1]), one_max_loop(color_hls[2]))
         return RGB_to_hex(hls)
+    elif color_comp == "bump":
+        return ''.join(RGB_to_hex((clamp(int(crgb[0], 16) + color_bump), clamp(int(crgb[1], 16) + color_bump), clamp(int(crgb[2], 16) + color_bump))))
     elif color_comp == "hue":
         hsv = rgb_to_hsv(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
         hsv = hsv_to_rgb(one_max_loop(hsv[0]+color_hsv[0]), one_max_loop(hsv[1]+color_hsv[1]), one_max_loop(hsv[2]+color_hsv[2]))
@@ -145,13 +145,13 @@ def Complementary_Color_Modify(im_color, com_color):
         hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
         hls = hls_to_rgb(one_max_loop(hls[0]+color_hls[0]), one_max_loop(hls[1]+color_hls[1]), one_max_loop(hls[2]+color_hls[2]))
         return RGB_to_hex(hls)
-    elif color_comp == "fix":
-        hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
-        hls = hls_to_rgb(one_max_loop(hls[0]+color_hls[0]), one_max_loop(color_hls[1]), one_max_loop(color_hls[2]))
-        return RGB_to_hex(hls)
     elif color_comp == "fixcomp" or color_comp == "fixboth":
         hls = rgb_to_hls(int(crgb[0], 16)/255., int(crgb[1], 16)/255., int(crgb[2], 16)/255.)
         hls = hls_to_rgb(one_max_loop(hls[0]+color_hls[0]), color_hls[1], color_hls[2])
+        return RGB_to_hex(hls)
+    elif color_comp == "fix":
+        hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+        hls = hls_to_rgb(one_max_loop(hls[0]+color_hls[0]), one_max_loop(color_hls[1]), one_max_loop(color_hls[2]))
         return RGB_to_hex(hls)
     return com_color
 def Image_Color_Modify(im_color):
