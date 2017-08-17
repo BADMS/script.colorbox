@@ -193,25 +193,20 @@ def Color_Modify(im_color, com_color, color_eqn):
     else:
         cc_color = [int(com_color[2:4], 16), int(com_color[4:6], 16), int(com_color[6:8], 16)]
     for ccarg in get_cm_color[1].strip().split('@'):
-        HOME.setProperty('ihsv', str(ccarg))
         arg = ccarg.strip().split('*')
-        HOME.setProperty('rhsv', 'arg'+str(arg[0]))
         if arg[0] == 'hls':
             color_mod = arg[1].strip().split(';')
             color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
             hls = rgb_to_hls(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
-            HOME.setProperty('ihsv', str(hls))
             cc_color = hls_to_rgb(one_max_loop(hls[0]+color_mod[0]), one_max_loop(hls[1]+color_mod[1]), one_max_loop(hls[2]+color_mod[2]))
         elif arg[0] == 'hsv':
             color_mod = arg[1].strip().split(';')
             color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
             hls = rgb_to_hsv(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
             cc_color = hsv_to_rgb(one_max_loop(hls[0]+color_mod[0]), one_max_loop(hls[1]+color_mod[1]), one_max_loop(hls[2]+color_mod[2]))
-            HOME.setProperty('rhsv', str(cc_color))
         elif arg[0] == 'bump':
             color_mod = int(arg[1])
             cc_color = (clamp(int(cc_color[0]) + color_mod), clamp(int(cc_color[1]) + color_mod), clamp(int(cc_color[2]) + color_mod))
-            HOME.setProperty('hhsv', str(cc_color))
     return RGB_to_hex(cc_color)
 def dataglitch(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
