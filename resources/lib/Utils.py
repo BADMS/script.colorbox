@@ -50,8 +50,8 @@ white =             "#ffffff"
 bits =              1
 doffset=            100
 quality =           8
-color_comp =        "main:hls*0.33;0.2;0.4" #hls*-0.1;1.0;0.1@hsv*0.2;0.3;-0.4@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
-color_main =        "main:hls*0;0.2;0.4" #hls*-0.1;1.0;0.1@hsv*0.2;0.3;-0.4@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
+color_comp =        "main:hls*-0.5;0.0;0.0@fhls*-;0.5;0.5" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*0.0;0.0;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
+color_main =        "main:fhls*-;0.5;0.5" #[comp|main]:fhls*0;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def set_quality(new_value):
@@ -109,20 +109,6 @@ def Shuffle_Set(amount,timed=40):
         npegs = ''.join(npeg)
         HOME.clearProperty('Colorbox_shuffle.' + npegs)
         time.sleep(timed)
-def Random_Color():
-    return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
-def Complementary_Color(hex_color):
-    irgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
-    hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
-    hls = hls_to_rgb(one_max_loop(hls[0]+0.5), hls[1], hls[2])
-    return RGB_to_hex(hls)
-def Black_White(hex_color, prop):
-    comp = hex_to_RGB(hex_color)
-    contrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
-    luma = "{:.0f}".format((int(comp[0]) * 0.2126) + (int(comp[1]) * 0.7152) + (int(comp[2]) * 0.0722))
-    #luma = "{:.0f}".format(math.sqrt(0.241 * math.pow(int(comp[0]),2) + 0.691 * math.pow(int(comp[1]),2) + 0.068 * math.pow(int(comp[2]),2)))
-    HOME.setProperty('BW'+prop, str(contrast))
-    HOME.setProperty('LUMA'+prop, str(luma))
 def Remove_Quotes(label):
     if label.startswith("'") and label.endswith("'") and len(label) > 2:
         label = label[1:-1]
@@ -199,15 +185,39 @@ def Color_Modify(im_color, com_color, color_eqn):
             color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
             hls = rgb_to_hls(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
             cc_color = hls_to_rgb(one_max_loop(hls[0]+color_mod[0]), one_max_loop(hls[1]+color_mod[1]), one_max_loop(hls[2]+color_mod[2]))
+        elif arg[0] == 'fhls':
+            hls = rgb_to_hls(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
+            color_mod = arg[1].strip().split(';')
+            color_mod = (float(check_mod(color_mod[0], hls[0])), float(check_mod(color_mod[1], hls[1])), float(check_mod(color_mod[2], hls[2])))
+            cc_color = hls_to_rgb(one_max_loop(color_mod[0]), one_max_loop(color_mod[1]), one_max_loop(color_mod[2]))
         elif arg[0] == 'hsv':
             color_mod = arg[1].strip().split(';')
             color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
-            hls = rgb_to_hsv(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
-            cc_color = hsv_to_rgb(one_max_loop(hls[0]+color_mod[0]), one_max_loop(hls[1]+color_mod[1]), one_max_loop(hls[2]+color_mod[2]))
+            hsv = rgb_to_hsv(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
+            cc_color = hsv_to_rgb(one_max_loop(hsv[0]+color_mod[0]), one_max_loop(hsv[1]+color_mod[1]), one_max_loop(hsv[2]+color_mod[2]))
+        elif arg[0] == 'fhsv':
+            hsv = rgb_to_hsv(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
+            color_mod = arg[1].strip().split(';')
+            color_mod = (float(check_mod(color_mod[0]), hsv[0]), float(check_mod(color_mod[1]), hsv[1]), float(check_mod(color_mod[2]), hsv[2]))
+            cc_color = hsv_to_rgb(one_max_loop(color_mod[0]), one_max_loop(color_mod[1]), one_max_loop(color_mod[2]))
         elif arg[0] == 'bump':
             color_mod = int(arg[1])
             cc_color = (clamp(int(cc_color[0]) + color_mod), clamp(int(cc_color[1]) + color_mod), clamp(int(cc_color[2]) + color_mod))
     return RGB_to_hex(cc_color)
+def Random_Color():
+    return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
+def Complementary_Color(hex_color):
+    irgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
+    hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+    hls = hls_to_rgb(one_max_loop(hls[0]+0.5), hls[1], hls[2])
+    return RGB_to_hex(hls)
+def Black_White(hex_color, prop):
+    comp = hex_to_RGB(hex_color)
+    contrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
+    luma = "{:.0f}".format((int(comp[0]) * 0.2126) + (int(comp[1]) * 0.7152) + (int(comp[2]) * 0.0722))
+    #luma = "{:.0f}".format(math.sqrt(0.241 * math.pow(int(comp[0]),2) + 0.691 * math.pow(int(comp[1]),2) + 0.068 * math.pow(int(comp[2]),2)))
+    HOME.setProperty('BW'+prop, str(contrast))
+    HOME.setProperty('LUMA'+prop, str(luma))
 def dataglitch(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "dataglitch" + str(doffset) + str(quality) + ".png"
@@ -857,6 +867,10 @@ def one_max_loop(oml):
         return abs(oml) - 1.0
     else:
         return abs(oml)
+def check_mod(mod, hls):
+    if mod == '-':
+        return float(hls)
+    return float(mod)
 def Load_Colors_Dict():
     try:
         with open(ADDON_COLORS) as file:
