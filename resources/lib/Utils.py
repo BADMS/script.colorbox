@@ -198,7 +198,7 @@ def Color_Modify(im_color, com_color, color_eqn):
             color_mod = arg[1].strip().split(';')
             color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
             hls = rgb_to_hls(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
-            cc_color = hls_to_rgb(one_max_loop(hls[0]+color_mod[0]), one_max_loop(hls[1]+color_mod[1]), one_max_loop(hls[2]+color_mod[2]))
+            cc_color = hls_to_rgb(one_max_loop(hls[0]+color_mod[0]), color_mod[1], color_mod[2])
         elif arg[0] == 'hsv':
             color_mod = arg[1].strip().split(';')
             color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
