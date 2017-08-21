@@ -26,11 +26,13 @@ HOME =              xbmcgui.Window(10000)
 ONE_THIRD =         1.0/3.0
 ONE_SIXTH =         1.0/6.0
 TWO_THIRD =         2.0/3.0
+lgint =             10
+lgsteps =           50
 black_pixel =       (0, 0, 0, 255)
 white_pixel =       (255, 255, 255, 255)
 randomness =        (0)
-threshold =         int(100)
-clength =           int(50)
+threshold =         100
+clength =           50
 angle =             float(0)
 delta_x =           40
 delta_y =           90
@@ -49,7 +51,7 @@ white =             "#ffffff"
 bits =              1
 doffset=            100
 quality =           8
-color_comp =        "main:hls*-0.5;0.0;0.0@fhls*-;0.5;0.5" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*-;-0.1;0.3@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
+color_comp =        "main:hls*0.5;0.0;0.0@fhls*-;0.5;0.5" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*-;-0.1;0.3@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 color_main =        "main:fhls*-;0.5;0.5" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
@@ -77,6 +79,14 @@ def set_white(new_value):
     global white
     white = "#" + str(new_value)
     xbmc.executebuiltin('Skin.SetString(colorbox_white,'+str(new_value)+')')
+def set_lgint(new_value):
+    global lgint
+    lgint = int(new_value)
+    xbmc.executebuiltin('Skin.SetString(colorbox_lgint,'+str(new_value)+')')
+def set_lgsteps(new_value):
+    global lgsteps
+    lgsteps = int(new_value)
+    xbmc.executebuiltin('Skin.SetString(colorbox_lgsteps,'+str(new_value)+')')
 def set_comp(new_value):
     global color_comp
     color_comp = str(new_value)
@@ -133,25 +143,23 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
     if md5 not in colors_dict:
         filename = md5 + ".png"
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
-        if not xbmcvfs.exists(targetfile):
-            Img = Check_XBMC_Internal(targetfile, filterimage)
-            if not Img:
-                return "", ""
-            img = Image.open(Img)
-            img.thumbnail((200, 200))
-            img = img.convert('RGB')
-            maincolor, cmaincolor = Get_Colors(img, md5)
+        Img = Check_XBMC_Internal(targetfile, filterimage)
+        if not Img: return "", ""
+        img = Image.open(Img)
+        img.thumbnail((200, 200))
+        img = img.convert('RGB')
+        maincolor, cmaincolor = Get_Colors(img, md5)
     else:
         maincolor, cmaincolor = colors_dict[md5].split(':')
     Black_White(maincolor, cname)
     cimagecolor = Color_Modify(maincolor, cmaincolor, color_comp)
     imagecolor = Color_Modify(maincolor, cmaincolor, color_main)
-    tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 10, var3))
+    tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], lgsteps, lgint, var3))
     tmc.start()
-    tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 10, var4))
+    tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], lgsteps, lgint, var4))
     tmcc.start()
-    #linear_gradient(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 0.01, var3)
-    #linear_gradient(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 0.01, var4)
+    #linear_gradient(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 10, var3)
+    #linear_gradient(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 10, var4)
     return imagecolor, cimagecolor
 def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ffffffff'):
     md5 = hashlib.md5(filterimage).hexdigest()
@@ -159,14 +167,12 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
     if md5 not in colors_dict:
         filename = md5 + ".png"
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
-        if not xbmcvfs.exists(targetfile):
-            Img = Check_XBMC_Internal(targetfile, filterimage)
-            if not Img:
-                return "", ""
-            img = Image.open(Img)
-            img.thumbnail((200, 200))
-            img = img.convert('RGB')
-            maincolor, cmaincolor = Get_Colors(img, md5)
+        Img = Check_XBMC_Internal(targetfile, filterimage)
+        if not Img: return "", ""
+        img = Image.open(Img)
+        img.thumbnail((200, 200))
+        img = img.convert('RGB')
+        maincolor, cmaincolor = Get_Colors(img, md5)
     else:
         maincolor, cmaincolor = colors_dict[md5].split(':')
     Black_White(maincolor, cname)
@@ -221,61 +227,65 @@ def dataglitch(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "dataglitch" + str(doffset) + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        width, height = img.size
-        qwidth = width / quality
-        qheight = height / quality
-        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
-        img = img.convert('RGB')
-        img = Dataglitch_Image(img)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    width, height = img.size
+    qwidth = width / quality
+    qheight = height / quality
+    img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
+    img = img.convert('RGB')
+    img = Dataglitch_Image(img)
+    img.save(targetfile)
     return targetfile
 def blur(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "blur" + str(radius) + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        width, height = img.size
-        qwidth = width / quality
-        qheight = height / quality
-        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
-        img = img.convert('RGB')
-        imgfilter = MyGaussianBlur(radius=radius)
-        img = img.filter(imgfilter)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    width, height = img.size
+    qwidth = width / quality
+    qheight = height / quality
+    img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
+    img = img.convert('RGB')
+    imgfilter = MyGaussianBlur(radius=radius)
+    img = img.filter(imgfilter)
+    img.save(targetfile)
     return targetfile
 def pixelate(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "pixelate" + str(pixelsize) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        img = Pixelate_Image(img)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    img = Pixelate_Image(img)
+    img.save(targetfile)
     return targetfile
 def shiftblock(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "shiftblock" + str(blockSize) + str(sigma) + str(iterations) + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        qiterations = iterations / quality
-        img = Image.open(Img)
-        img = Shiftblock_Image(img, blockSize, sigma, qiterations)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    qiterations = iterations / quality
+    img = Image.open(Img)
+    img = Shiftblock_Image(img, blockSize, sigma, qiterations)
+    img.save(targetfile)
     return targetfile
 def pixelnone(filterimage):
     return pixelshift(filterimage, "none")
@@ -302,154 +312,119 @@ def pixelshift(filterimage, ptype="none"):
     angle = int(pangle)
     global randomness
     randomness = float(prandomness)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        width, height = img.size
-        qwidth = width / quality
-        qheight = height / quality
-        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
-        img = img.convert('RGB')
-        img = Pixelshift_Image(img, ptype)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    width, height = img.size
+    qwidth = width / quality
+    qheight = height / quality
+    img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
+    img = img.convert('RGB')
+    img = Pixelshift_Image(img, ptype)
+    img.save(targetfile)
     return targetfile
 def fakelight(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "fakelight" + str(lightsize) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        img = fake_light(img,lightsize)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    img = fake_light(img,lightsize)
+    img.save(targetfile)
     return targetfile
 def twotone(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "twotone" + str(black) + str(white) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        img = image_recolorize(img,black,white)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    img = image_recolorize(img,black,white)
+    img.save(targetfile)
     return targetfile
 def posterize(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "posterize" + str(bits) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        img = image_posterize(img,bits)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    img = image_posterize(img,bits)
+    img.save(targetfile)
     return targetfile
 def distort(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "distort" + str(delta_x) + str(delta_y) + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        width, height = img.size
-        qwidth = width / quality
-        qheight = height / quality
-        img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
-        img = img.convert('RGB')
-        img = image_distort(img,delta_x,delta_y)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    width, height = img.size
+    qwidth = width / quality
+    qheight = height / quality
+    img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
+    img = img.convert('RGB')
+    img = image_distort(img,delta_x,delta_y)
+    img.save(targetfile)
     return targetfile
 def halftone(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "halftone" + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        width, height = img.size
-        qwidth = width / quality
-        qheight = height / quality
-        if qwidth % 2 != 0:
-            qwidth += 1
-        if qheight % 2 != 0:
-            qheight += 1
-        img = img.resize((qwidth, qheight), Image.ANTIALIAS)
-        img = Halftone_Image(img,qwidth,qheight)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    width, height = img.size
+    qwidth = width / quality
+    qheight = height / quality
+    if qwidth % 2 != 0:
+        qwidth += 1
+    if qheight % 2 != 0:
+        qheight += 1
+    img = img.resize((qwidth, qheight), Image.ANTIALIAS)
+    img = Halftone_Image(img,qwidth,qheight)
+    img.save(targetfile)
     return targetfile
 def dither(filterimage):
     md5 = hashlib.md5(filterimage).hexdigest()
     filename = md5 + "dither" + str(quality) + ".png"
     targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    if not xbmcvfs.exists(targetfile):
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img:
-            return ""
-        img = Image.open(Img)
-        width, height = img.size
-        qwidth = width / quality
-        qheight = height / quality
-        if qwidth % 2 != 0:
-            qwidth += 1
-        if qheight % 2 != 0:
-            qheight += 1
-        img = img.resize((qwidth, qheight), Image.ANTIALIAS)
-        img = Dither_Image(img,qwidth,qheight)
-        img.save(targetfile)
+    Cache = Check_XBMC_Cache(targetfile)
+    HOME.setProperty('cacher', Cache)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    width, height = img.size
+    qwidth = width / quality
+    qheight = height / quality
+    if qwidth % 2 != 0:
+        qwidth += 1
+    if qheight % 2 != 0:
+        qheight += 1
+    img = img.resize((qwidth, qheight), Image.ANTIALIAS)
+    img = Dither_Image(img,qwidth,qheight)
+    img.save(targetfile)
     return targetfile
-def Get_Colors(img, md5):
-    if not colors_dict: Load_Colors_Dict()
-    if md5 not in colors_dict:
-        colour_tuple = [None, None, None]
-        for channel in range(3):
-            pixels = img.getdata(band=channel)
-            values = []
-            for pixel in pixels:
-                values.append(pixel)
-            colour_tuple[channel] = clamp(sum(values) / len(values))
-        imagecolor = 'ff%02x%02x%02x' % tuple(colour_tuple)
-        cimagecolor = Complementary_Color(imagecolor)
-        Write_Colors_Dict(md5,imagecolor,cimagecolor)
-    else:
-        imagecolor, cimagecolor = colors_dict[md5].split(':')
-    return imagecolor, cimagecolor
-def Check_XBMC_Internal(targetfile, filterimage):
-    cachedthumb = xbmc.getCacheThumbName(filterimage)
-    xbmc_vid_cache_file = os.path.join("special://profile/Thumbnails/Video", cachedthumb[0], cachedthumb)
-    xbmc_cache_file = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
-    for i in range(1, 4):
-        if xbmcvfs.exists(xbmc_cache_file):
-            return xbmc.translatePath(xbmc_cache_file)
-        elif xbmcvfs.exists(xbmc_vid_cache_file):
-            return xbmc.translatePath(xbmc_vid_cache_file)
-        else:
-            filterimage = urllib.unquote(filterimage.replace("image://", "")).decode('utf8')
-            if filterimage.endswith("/"):
-                filterimage = filterimage[:-1]
-            xbmcvfs.copy(filterimage, targetfile)
-            return targetfile
-    return
-def Get_Frequent_Color(img):
-    w, h = img.size
-    pixels = img.getcolors(w * h)
-    most_frequent_pixel = pixels[0]
-    for count, colour in pixels:
-        if count > most_frequent_pixel[0]:
-            most_frequent_pixel = (count, colour)
-    return 'ff%02x%02x%02x' % tuple(most_frequent_pixel[1])
-def clamp(x):
-    return max(0, min(x, 255))
 def linear_gradient(cname, start_hex="000000", finish_hex="FFFFFF", n=10, sleep=50, s_thread_check=""):
     if start_hex == '' or finish_hex == '':
         return
@@ -870,6 +845,66 @@ def check_mod(mod, hls):
     if mod == '-':
         return float(hls)
     return float(mod)
+def Get_Colors(img, md5):
+    if not colors_dict: Load_Colors_Dict()
+    if md5 not in colors_dict:
+        colour_tuple = [None, None, None]
+        for channel in range(3):
+            pixels = img.getdata(band=channel)
+            values = []
+            for pixel in pixels:
+                values.append(pixel)
+            colour_tuple[channel] = clamp(sum(values) / len(values))
+        imagecolor = 'ff%02x%02x%02x' % tuple(colour_tuple)
+        cimagecolor = Complementary_Color(imagecolor)
+        Write_Colors_Dict(md5,imagecolor,cimagecolor)
+    else:
+        imagecolor, cimagecolor = colors_dict[md5].split(':')
+    return imagecolor, cimagecolor
+def Check_XBMC_Internal(targetfile, filterimage):
+    cachedthumb = xbmc.getCacheThumbName(filterimage)
+    xbmc_vid_cache_file = os.path.join("special://profile/Thumbnails/Video", cachedthumb[0], cachedthumb)
+    xbmc_cache_filep = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
+    xbmc_cache_filej = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".png")
+    for i in range(1, 4):
+        if xbmcvfs.exists(xbmc_cache_filej):
+            return xbmc.translatePath(xbmc_cache_filej)
+        elif xbmcvfs.exists(xbmc_cache_filep):
+            return xbmc.translatePath(xbmc_cache_filep)
+        elif xbmcvfs.exists(xbmc_vid_cache_file):
+            return xbmc.translatePath(xbmc_vid_cache_file)
+        else:
+            filterimage = urllib.unquote(filterimage.replace("image://", "")).decode('utf8')
+            if filterimage.endswith("/"):
+                filterimage = filterimage[:-1]
+            xbmcvfs.copy(filterimage, targetfile)
+            return targetfile
+    return
+def Check_XBMC_Cache(targetfile):
+    cachedthumb = xbmc.getCacheThumbName(targetfile)
+    xbmc_vid_cache_file = os.path.join("special://profile/Thumbnails/Video", cachedthumb[0], cachedthumb)
+    xbmc_cache_filep = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
+    xbmc_cache_filej = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".png")
+    for i in range(1, 4):
+        if xbmcvfs.exists(xbmc_cache_filej):
+            return xbmc.translatePath(xbmc_cache_filej)
+        elif xbmcvfs.exists(xbmc_cache_filep):
+            return xbmc.translatePath(xbmc_cache_filep)
+        elif xbmcvfs.exists(xbmc_vid_cache_file):
+            return xbmc.translatePath(xbmc_vid_cache_file)
+    if xbmcvfs.exists(targetfile):
+        return targetfile
+    return ""
+def Get_Frequent_Color(img):
+    w, h = img.size
+    pixels = img.getcolors(w * h)
+    most_frequent_pixel = pixels[0]
+    for count, colour in pixels:
+        if count > most_frequent_pixel[0]:
+            most_frequent_pixel = (count, colour)
+    return 'ff%02x%02x%02x' % tuple(most_frequent_pixel[1])
+def clamp(x):
+    return max(0, min(x, 255))
 def Load_Colors_Dict():
     try:
         with open(ADDON_COLORS) as file:
