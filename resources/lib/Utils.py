@@ -38,7 +38,7 @@ delta_x =           40
 delta_y =           90
 radius =            1
 pixelsize =         20
-blockSize =         192
+blockSize =         64
 sigma =             0.05
 iterations =        1920
 pthreshold =        100
@@ -55,6 +55,68 @@ color_comp =        "main:hls*0.5;0.0;0.0@fhls*-;0.5;0.5" #[comp|main]:hls*-0.5;
 color_main =        "main:fhls*-;0.5;0.5" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+def fnblur(): return str(radius) + str(quality)
+def fnpixelate(): return str(pixelsize) + str(quality)
+def fnshiftblock(): return str(blockSize) + str(sigma) + str(iterations) + str(quality)
+def fnpixelnone(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
+def fnpixelwaves(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
+def fnpixelrandom(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
+def fnpixelfile(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
+def fnpixelfedges(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
+def fnpixeledges(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
+def fnfakelight(): return str(lightsize) + str(quality)
+def fntwotone(): return str(black) + str(white) + str(quality)
+def fnposterize(): return str(bits) + str(quality)
+def fndistort(): return str(delta_x) + str(delta_y) + str(quality)
+def fnhalftone(): return str(quality)
+def fndither(): return str(quality)
+def fndataglitch(): return str(doffset) + str(quality)
+ColorBox_filename_map = {
+        'blur':         fnblur,
+        'pixelate':     fnpixelate,
+        'shiftblock':   fnshiftblock,
+        'pixelnone':    fnpixelnone,
+        'pixelwaves':   fnpixelwaves,
+        'pixelrandom':  fnpixelrandom,
+        'pixelfile':    fnpixelfile,
+        'pixelfedges':  fnpixelfedges,
+        'pixeledges':   fnpixeledges,
+        'fakelight':    fnfakelight,
+        'twotone':      fntwotone,
+        'posterize':    fnposterize,
+        'distort':      fndistort,
+        'halftone':     fnhalftone,
+        'dither':       fndither,
+        'dataglitch':   fndataglitch}
+def ColorBox_go_map(filterimage, imageops):
+    try:
+        filename = hashlib.md5(filterimage).hexdigest()
+        for cmarg in imageops.strip().split('-'):
+            filename = filename + cmarg + ColorBox_filename_map[cmarg]()
+    except Exception as e:
+        log("cbmerr: %s op: %s" % (e,imageops))
+    targetfile = os.path.join(ADDON_DATA_PATH, filename + '.png')
+    Cache = Check_XBMC_Cache(targetfile)
+    if Cache != "": return Cache
+    Img = Check_XBMC_Internal(targetfile, filterimage)
+    if not Img: return ""
+    img = Image.open(Img)
+    width, height = img.size
+    qwidth = width / quality
+    qheight = height / quality
+    if qwidth % 2 != 0:
+        qwidth += 1
+    if qheight % 2 != 0:
+        qheight += 1
+    img = img.resize((qwidth, qheight), Image.ANTIALIAS)
+    img = img.convert('RGB')
+    try:
+        for cmarg in imageops.strip().split('-'):
+            img = ColorBox_function_map[cmarg](img)
+    except Exception as e:
+        log("cbmx: %s op: %s" % (e,cmarg))
+    img.save(targetfile)
+    return targetfile
 def set_quality(new_value):
     global quality
     quality = int(new_value)
@@ -95,215 +157,33 @@ def set_main(new_value):
     global color_main
     color_main = str(new_value)
     xbmc.executebuiltin('Skin.SetString(colorbox_main,'+str(new_value)+')')
-def Shuffle_Set(amount,timed=40):
-    timed = int(timed)
-    board = [[i] for i in range(int(amount))]
-    shuffle(board)
-    HOME.setProperty('Colorbox_shuffle', '1')
-    for peg in board:
-        peg = list(peg)
-        npeg = []
-        for p in peg:
-            npeg.append(shuffle_numbers[int(p)])
-        npegs = ''.join(npeg)
-        HOME.setProperty('Colorbox_shuffle.' + npegs, '1')
-        xbmc.sleep(timed)
-    shuffle(board)
-    HOME.setProperty('Colorbox_shuffle', '0')
-    for peg in board:
-        peg = list(peg)
-        npeg = []
-        for p in peg:
-            npeg.append(shuffle_numbers[int(p)])
-        npegs = ''.join(npeg)
-        HOME.clearProperty('Colorbox_shuffle.' + npegs)
-        xbmc.sleep(timed)
-def Remove_Quotes(label):
-    if label.startswith("'") and label.endswith("'") and len(label) > 2:
-        label = label[1:-1]
-        if label.startswith('"') and label.endswith('"') and len(label) > 2:
-            label = label[1:-1]
-    return label
-def Show_Percentage():
-    """nitems = int(xbmc.getInfoLabel('Container().NumItems'))
-    for x in range(0, nitems):"""
-    try:
-        stot = int(xbmc.getInfoLabel('ListItem.Property(TotalEpisodes)'))
-        wtot = int(xbmc.getInfoLabel('ListItem.Property(WatchedEpisodes)'))
-        getcontext().prec = 6
-        perc = "{:.0f}".format(100 / Decimal(stot) * Decimal(wtot))
-        HOME.setProperty("Show_Percentage", perc)
-    except:
-        return
-def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='ffffffff'):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    var3 = 'Old' + cname
-    var4 = 'Old' + ccname
-    if not colors_dict: Load_Colors_Dict()
-    if md5 not in colors_dict:
-        filename = md5 + ".png"
-        targetfile = os.path.join(ADDON_DATA_PATH, filename)
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img: return "", ""
-        img = Image.open(Img)
-        img.thumbnail((200, 200))
-        img = img.convert('RGB')
-        maincolor, cmaincolor = Get_Colors(img, md5)
-    else:
-        maincolor, cmaincolor = colors_dict[md5].split(':')
-    Black_White(maincolor, cname)
-    cimagecolor = Color_Modify(maincolor, cmaincolor, color_comp)
-    imagecolor = Color_Modify(maincolor, cmaincolor, color_main)
-    tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], lgsteps, lgint, var3))
-    tmc.start()
-    tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], lgsteps, lgint, var4))
-    tmcc.start()
-    #linear_gradient(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 10, var3)
-    #linear_gradient(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 10, var4)
-    return imagecolor, cimagecolor
-def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ffffffff'):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    if not colors_dict: Load_Colors_Dict()
-    if md5 not in colors_dict:
-        filename = md5 + ".png"
-        targetfile = os.path.join(ADDON_DATA_PATH, filename)
-        Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img: return "", ""
-        img = Image.open(Img)
-        img.thumbnail((200, 200))
-        img = img.convert('RGB')
-        maincolor, cmaincolor = Get_Colors(img, md5)
-    else:
-        maincolor, cmaincolor = colors_dict[md5].split(':')
-    Black_White(maincolor, cname)
-    return Color_Modify(maincolor, cmaincolor, color_main), Color_Modify(maincolor, cmaincolor, color_comp)
-def Color_Modify(im_color, com_color, color_eqn):
-    get_cm_color = color_eqn.strip().split(':')
-    if get_cm_color[0] == 'main':
-        cc_color = [int(im_color[2:4], 16), int(im_color[4:6], 16), int(im_color[6:8], 16)]
-    else:
-        cc_color = [int(com_color[2:4], 16), int(com_color[4:6], 16), int(com_color[6:8], 16)]
-    for ccarg in get_cm_color[1].strip().split('@'):
-        arg = ccarg.strip().split('*')
-        if arg[0] == 'hls':
-            color_mod = arg[1].strip().split(';')
-            color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
-            hls = rgb_to_hls(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
-            cc_color = hls_to_rgb(one_max_loop(hls[0]+color_mod[0]), one_max_loop(hls[1]+color_mod[1]), one_max_loop(hls[2]+color_mod[2]))
-        elif arg[0] == 'fhls':
-            hls = rgb_to_hls(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
-            color_mod = arg[1].strip().split(';')
-            color_mod = (float(check_mod(color_mod[0], hls[0])), float(check_mod(color_mod[1], hls[1])), float(check_mod(color_mod[2], hls[2])))
-            cc_color = hls_to_rgb(one_max_loop(color_mod[0]), one_max_loop(color_mod[1]), one_max_loop(color_mod[2]))
-        elif arg[0] == 'hsv':
-            color_mod = arg[1].strip().split(';')
-            color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
-            hsv = rgb_to_hsv(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
-            cc_color = hsv_to_rgb(one_max_loop(hsv[0]+color_mod[0]), one_max_loop(hsv[1]+color_mod[1]), one_max_loop(hsv[2]+color_mod[2]))
-        elif arg[0] == 'fhsv':
-            hsv = rgb_to_hsv(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
-            color_mod = arg[1].strip().split(';')
-            color_mod = (float(check_mod(color_mod[0]), hsv[0]), float(check_mod(color_mod[1]), hsv[1]), float(check_mod(color_mod[2]), hsv[2]))
-            cc_color = hsv_to_rgb(one_max_loop(color_mod[0]), one_max_loop(color_mod[1]), one_max_loop(color_mod[2]))
-        elif arg[0] == 'bump':
-            color_mod = int(arg[1])
-            cc_color = (clamp(int(cc_color[0]) + color_mod), clamp(int(cc_color[1]) + color_mod), clamp(int(cc_color[2]) + color_mod))
-    return RGB_to_hex(cc_color)
-def Random_Color():
-    return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
-def Complementary_Color(hex_color):
-    irgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
-    hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
-    hls = hls_to_rgb(one_max_loop(hls[0]+0.5), hls[1], hls[2])
-    return RGB_to_hex(hls)
-def Black_White(hex_color, prop):
-    comp = hex_to_RGB(hex_color)
-    contrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
-    luma = "{:.0f}".format((int(comp[0]) * 0.2126) + (int(comp[1]) * 0.7152) + (int(comp[2]) * 0.0722))
-    #luma = "{:.0f}".format(math.sqrt(0.241 * math.pow(int(comp[0]),2) + 0.691 * math.pow(int(comp[1]),2) + 0.068 * math.pow(int(comp[2]),2)))
-    HOME.setProperty('BW'+prop, str(contrast))
-    HOME.setProperty('LUMA'+prop, str(luma))
-def dataglitch(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "dataglitch" + str(doffset) + str(quality) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    width, height = img.size
-    qwidth = width / quality
-    qheight = height / quality
-    img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
+def dataglitch(img):
     img = img.convert('RGB')
-    img = Dataglitch_Image(img)
-    img.save(targetfile)
-    return targetfile
-def blur(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "blur" + str(radius) + str(quality) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    width, height = img.size
-    qwidth = width / quality
-    qheight = height / quality
-    img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
-    img = img.convert('RGB')
+    return Dataglitch_Image(img)
+def blur(img):
     imgfilter = MyGaussianBlur(radius=radius)
     img = img.filter(imgfilter)
-    img.save(targetfile)
-    return targetfile
-def pixelate(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "pixelate" + str(pixelsize) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    img = Pixelate_Image(img)
-    img.save(targetfile)
-    return targetfile
-def shiftblock(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "shiftblock" + str(blockSize) + str(sigma) + str(iterations) + str(quality) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
+    return img
+def pixelate(img):
+    return Pixelate_Image(img)
+def shiftblock(img):
     qiterations = iterations / quality
-    img = Image.open(Img)
-    img = Shiftblock_Image(img, blockSize, sigma, qiterations)
-    img.save(targetfile)
-    return targetfile
-def pixelnone(filterimage):
-    return pixelshift(filterimage, "none")
-def pixelwaves(filterimage):
-    return pixelshift(filterimage, "waves")
-def pixelrandom(filterimage):
-    return pixelshift(filterimage, "random")
-def pixelfile(filterimage):
-    return pixelshift(filterimage, "file")
-def pixelfedges(filterimage):
-    return pixelshift(filterimage, "fedges")
-def pixeledges(filterimage):
-    return pixelshift(filterimage, "edges")
-def pixelshift(filterimage, ptype="none"):
-    """stype; 1=random, 2=edges, 3=waves, 4=file, 5=file_edges, 0=none"""
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "pixelshift" + str(ptype) + str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
+    
+    return Shiftblock_Image(img, blockSize, sigma, qiterations)
+def pixelnone(img):
+    return pixelshift(img, "none")
+def pixelwaves(img):
+    return pixelshift(img, "waves")
+def pixelrandom(img):
+    return pixelshift(img, "random")
+def pixelfile(img):
+    return pixelshift(img, "file")
+def pixelfedges(img):
+    return pixelshift(img, "fedges")
+def pixeledges(img):
+    return pixelshift(img, "edges")
+def pixelshift(img, ptype="none"):
+    #stype; 1=random, 2=edges, 3=waves, 4=file, 5=file_edges, 0=none
     global threshold
     threshold = int(pthreshold)
     global clength
@@ -312,140 +192,22 @@ def pixelshift(filterimage, ptype="none"):
     angle = int(pangle)
     global randomness
     randomness = float(prandomness)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    width, height = img.size
-    qwidth = width / quality
-    qheight = height / quality
-    img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
-    img = img.convert('RGB')
+    
     img = Pixelshift_Image(img, ptype)
-    img.save(targetfile)
-    return targetfile
-def fakelight(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "fakelight" + str(lightsize) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    img = fake_light(img,lightsize)
-    img.save(targetfile)
-    return targetfile
-def twotone(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "twotone" + str(black) + str(white) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    img = image_recolorize(img,black,white)
-    img.save(targetfile)
-    return targetfile
-def posterize(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "posterize" + str(bits) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    img = image_posterize(img,bits)
-    img.save(targetfile)
-    return targetfile
-def distort(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "distort" + str(delta_x) + str(delta_y) + str(quality) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    width, height = img.size
-    qwidth = width / quality
-    qheight = height / quality
-    img.thumbnail((qwidth, qheight), Image.ANTIALIAS)
-    img = img.convert('RGB')
-    img = image_distort(img,delta_x,delta_y)
-    img.save(targetfile)
-    return targetfile
-def halftone(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "halftone" + str(quality) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    width, height = img.size
-    qwidth = width / quality
-    qheight = height / quality
-    if qwidth % 2 != 0:
-        qwidth += 1
-    if qheight % 2 != 0:
-        qheight += 1
-    img = img.resize((qwidth, qheight), Image.ANTIALIAS)
-    img = Halftone_Image(img,qwidth,qheight)
-    img.save(targetfile)
-    return targetfile
-def dither(filterimage):
-    md5 = hashlib.md5(filterimage).hexdigest()
-    filename = md5 + "dither" + str(quality) + ".png"
-    targetfile = os.path.join(ADDON_DATA_PATH, filename)
-    Cache = Check_XBMC_Cache(targetfile)
-    HOME.setProperty('cacher', Cache)
-    if Cache != "": return Cache
-    Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
-    img = Image.open(Img)
-    width, height = img.size
-    qwidth = width / quality
-    qheight = height / quality
-    if qwidth % 2 != 0:
-        qwidth += 1
-    if qheight % 2 != 0:
-        qheight += 1
-    img = img.resize((qwidth, qheight), Image.ANTIALIAS)
-    img = Dither_Image(img,qwidth,qheight)
-    img.save(targetfile)
-    return targetfile
-def linear_gradient(cname, start_hex="000000", finish_hex="FFFFFF", n=10, sleep=50, s_thread_check=""):
-    if start_hex == '' or finish_hex == '':
-        return
-    s = hex_to_RGB('#' + start_hex)
-    f = hex_to_RGB('#' + finish_hex)
-    RGB_list = [s]
-    for t in range(1, n):
-        if HOME.getProperty(s_thread_check)[2:8] != start_hex:
-            return
-        curr_vector = [
-            int(s[j] + (float(t)/(n-1))*(f[j]-s[j]))
-            for j in range(3)
-        ]
-        HOME.setProperty(cname, RGB_to_hex(curr_vector))
-        xbmc.sleep(sleep)
-    return
-def hex_to_RGB(hex):
-    return [int(hex[i:i+2], 16) for i in range(1,6,2)]
-def RGB_to_hex(RGB):
-    RGB = [int(x) for x in RGB]
-    return "FF"+"".join(["0{0:x}".format(v) if v < 16 else "{0:x}".format(v) for v in RGB])
+    return img
+def fakelight(img):
+    return fake_light(img,lightsize)
+def twotone(img):
+    return image_recolorize(img,black,white)
+def posterize(img):
+    return image_posterize(img,bits)
+def distort(img):
+    
+    return image_distort(img,delta_x,delta_y)
+def halftone(img):
+    return Halftone_Image(img)
+def dither(img):
+    return Dither_Image(img)
 def Pixelate_Image(img):
     backgroundColor = (0,)*3
     image = img
@@ -464,7 +226,7 @@ def Dataglitch_Image(img, channel='r'):
     eval_getdata = channel + ".getdata()"
     channel_data = eval(eval_getdata)
     channel_deque = deque(channel_data)
-    channel_deque.rotate(random.randint(doffset - (doffset*2), doffset))
+    channel_deque.rotate(random.randint(0, doffset))
     eval_putdata = channel + ".putdata(channel_deque)"
     eval(eval_putdata)
     shifted_image = Image.merge('RGB', (r, g, b))
@@ -503,15 +265,21 @@ def get_saturation(gv, gq):
         return 0
     else:
         return 0
-def Halftone_Image(image, qw, qh):
+def Halftone_Image(img):
+    qw, qh = img.size
+    if qw % 2 != 0:
+        qw += 1
+    if qh % 2 != 0:
+        qh += 1
+    img = img.resize((qw, qh), Image.ANTIALIAS)
     hinew = Image.new("RGBA", (qw, qh), "white")
     hipixels = hinew.load()
     for i in range(0, qw, 2):
         for j in range(0, qh, 2):
-            p1 = get_pixel(image, i, j)
-            p2 = get_pixel(image, i, j + 1)
-            p3 = get_pixel(image, i + 1, j)
-            p4 = get_pixel(image, i + 1, j + 1)
+            p1 = get_pixel(img, i, j)
+            p2 = get_pixel(img, i, j + 1)
+            p3 = get_pixel(img, i + 1, j)
+            p4 = get_pixel(img, i + 1, j + 1)
             gray1 = (p1[0] * 0.299) + (p1[1] * 0.587) + (p1[2] * 0.114)
             gray2 = (p2[0] * 0.299) + (p2[1] * 0.587) + (p2[2] * 0.114)
             gray3 = (p3[0] * 0.299) + (p3[1] * 0.587) + (p3[2] * 0.114)
@@ -543,15 +311,21 @@ def Halftone_Image(image, qw, qh):
                 hipixels[i + 1, j]     = (0, 0, 0)       # Black
                 hipixels[i + 1, j + 1] = (0, 0, 0)       # Black
     return hinew
-def Dither_Image(image, qw, qh):
+def Dither_Image(img):
+    qw, qh = img.size
+    if qw % 2 != 0:
+        qw += 1
+    if qh % 2 != 0:
+        qh += 1
+    img = img.resize((qw, qh), Image.ANTIALIAS)
     dinew = Image.new("RGBA", (qw, qh), "white")
     dipixels = dinew.load()
     for i in range(0, qw, 2):
         for j in range(0, qh, 2):
-            p1 = get_pixel(image, i, j)
-            p2 = get_pixel(image, i, j + 1)
-            p3 = get_pixel(image, i + 1, j)
-            p4 = get_pixel(image, i + 1, j + 1)
+            p1 = get_pixel(img, i, j)
+            p2 = get_pixel(img, i, j + 1)
+            p3 = get_pixel(img, i + 1, j)
+            p4 = get_pixel(img, i + 1, j + 1)
             red   = (p1[0] + p2[0] + p3[0] + p4[0]) / 4
             green = (p1[1] + p2[1] + p3[1] + p4[1]) / 4
             blue  = (p1[2] + p2[2] + p3[2] + p4[2]) / 4
@@ -769,6 +543,155 @@ def image_distort(img, delta_x=50, delta_y=90):
                 pix[1] = y
             output_img[x,y] = img_data[tuple(pix)]
     return output
+def Shuffle_Set(amount,timed=40):
+    timed = int(timed)
+    board = [[i] for i in range(int(amount))]
+    shuffle(board)
+    HOME.setProperty('Colorbox_shuffle', '1')
+    for peg in board:
+        peg = list(peg)
+        npeg = []
+        for p in peg:
+            npeg.append(shuffle_numbers[int(p)])
+        npegs = ''.join(npeg)
+        HOME.setProperty('Colorbox_shuffle.' + npegs, '1')
+        xbmc.sleep(timed)
+    shuffle(board)
+    HOME.setProperty('Colorbox_shuffle', '0')
+    for peg in board:
+        peg = list(peg)
+        npeg = []
+        for p in peg:
+            npeg.append(shuffle_numbers[int(p)])
+        npegs = ''.join(npeg)
+        HOME.clearProperty('Colorbox_shuffle.' + npegs)
+        xbmc.sleep(timed)
+def Remove_Quotes(label):
+    if label.startswith("'") and label.endswith("'") and len(label) > 2:
+        label = label[1:-1]
+        if label.startswith('"') and label.endswith('"') and len(label) > 2:
+            label = label[1:-1]
+    return label
+def Show_Percentage():
+    """nitems = int(xbmc.getInfoLabel('Container().NumItems'))
+    for x in range(0, nitems):"""
+    try:
+        stot = int(xbmc.getInfoLabel('ListItem.Property(TotalEpisodes)'))
+        wtot = int(xbmc.getInfoLabel('ListItem.Property(WatchedEpisodes)'))
+        getcontext().prec = 6
+        perc = "{:.0f}".format(100 / Decimal(stot) * Decimal(wtot))
+        HOME.setProperty("Show_Percentage", perc)
+    except:
+        return
+def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='ffffffff'):
+    md5 = hashlib.md5(filterimage).hexdigest()
+    var3 = 'Old' + cname
+    var4 = 'Old' + ccname
+    if not colors_dict: Load_Colors_Dict()
+    if md5 not in colors_dict:
+        filename = md5 + ".png"
+        targetfile = os.path.join(ADDON_DATA_PATH, filename)
+        Img = Check_XBMC_Internal(targetfile, filterimage)
+        if not Img: return "", ""
+        img = Image.open(Img)
+        img.thumbnail((200, 200))
+        img = img.convert('RGB')
+        maincolor, cmaincolor = Get_Colors(img, md5)
+    else:
+        maincolor, cmaincolor = colors_dict[md5].split(':')
+    Black_White(maincolor, cname)
+    cimagecolor = Color_Modify(maincolor, cmaincolor, color_comp)
+    imagecolor = Color_Modify(maincolor, cmaincolor, color_main)
+    tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], lgsteps, lgint, var3))
+    tmc.start()
+    tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], lgsteps, lgint, var4))
+    tmcc.start()
+    #linear_gradient(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], 50, 10, var3)
+    #linear_gradient(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 10, var4)
+    return imagecolor, cimagecolor
+def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ffffffff'):
+    md5 = hashlib.md5(filterimage).hexdigest()
+    if not colors_dict: Load_Colors_Dict()
+    if md5 not in colors_dict:
+        filename = md5 + ".png"
+        targetfile = os.path.join(ADDON_DATA_PATH, filename)
+        Img = Check_XBMC_Internal(targetfile, filterimage)
+        if not Img: return "", ""
+        img = Image.open(Img)
+        img.thumbnail((200, 200))
+        img = img.convert('RGB')
+        maincolor, cmaincolor = Get_Colors(img, md5)
+    else:
+        maincolor, cmaincolor = colors_dict[md5].split(':')
+    Black_White(maincolor, cname)
+    return Color_Modify(maincolor, cmaincolor, color_main), Color_Modify(maincolor, cmaincolor, color_comp)
+def Color_Modify(im_color, com_color, color_eqn):
+    get_cm_color = color_eqn.strip().split(':')
+    if get_cm_color[0] == 'main':
+        cc_color = [int(im_color[2:4], 16), int(im_color[4:6], 16), int(im_color[6:8], 16)]
+    else:
+        cc_color = [int(com_color[2:4], 16), int(com_color[4:6], 16), int(com_color[6:8], 16)]
+    for ccarg in get_cm_color[1].strip().split('@'):
+        arg = ccarg.strip().split('*')
+        if arg[0] == 'hls':
+            color_mod = arg[1].strip().split(';')
+            color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
+            hls = rgb_to_hls(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
+            cc_color = hls_to_rgb(one_max_loop(hls[0]+color_mod[0]), one_max_loop(hls[1]+color_mod[1]), one_max_loop(hls[2]+color_mod[2]))
+        elif arg[0] == 'fhls':
+            hls = rgb_to_hls(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
+            color_mod = arg[1].strip().split(';')
+            color_mod = (float(check_mod(color_mod[0], hls[0])), float(check_mod(color_mod[1], hls[1])), float(check_mod(color_mod[2], hls[2])))
+            cc_color = hls_to_rgb(one_max_loop(color_mod[0]), one_max_loop(color_mod[1]), one_max_loop(color_mod[2]))
+        elif arg[0] == 'hsv':
+            color_mod = arg[1].strip().split(';')
+            color_mod = (float(color_mod[0]), float(color_mod[1]), float(color_mod[2]))
+            hsv = rgb_to_hsv(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
+            cc_color = hsv_to_rgb(one_max_loop(hsv[0]+color_mod[0]), one_max_loop(hsv[1]+color_mod[1]), one_max_loop(hsv[2]+color_mod[2]))
+        elif arg[0] == 'fhsv':
+            hsv = rgb_to_hsv(int(cc_color[0])/255., int(cc_color[1])/255., int(cc_color[2])/255.)
+            color_mod = arg[1].strip().split(';')
+            color_mod = (float(check_mod(color_mod[0]), hsv[0]), float(check_mod(color_mod[1]), hsv[1]), float(check_mod(color_mod[2]), hsv[2]))
+            cc_color = hsv_to_rgb(one_max_loop(color_mod[0]), one_max_loop(color_mod[1]), one_max_loop(color_mod[2]))
+        elif arg[0] == 'bump':
+            color_mod = int(arg[1])
+            cc_color = (clamp(int(cc_color[0]) + color_mod), clamp(int(cc_color[1]) + color_mod), clamp(int(cc_color[2]) + color_mod))
+    return RGB_to_hex(cc_color)
+def Random_Color():
+    return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
+def Complementary_Color(hex_color):
+    irgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
+    hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+    hls = hls_to_rgb(one_max_loop(hls[0]+0.5), hls[1], hls[2])
+    return RGB_to_hex(hls)
+def Black_White(hex_color, prop):
+    comp = hex_to_RGB(hex_color)
+    contrast = "{:.0f}".format((int(comp[0]) * 0.299) + (int(comp[1]) * 0.587) + (int(comp[2]) * 0.144))
+    luma = "{:.0f}".format((int(comp[0]) * 0.2126) + (int(comp[1]) * 0.7152) + (int(comp[2]) * 0.0722))
+    #luma = "{:.0f}".format(math.sqrt(0.241 * math.pow(int(comp[0]),2) + 0.691 * math.pow(int(comp[1]),2) + 0.068 * math.pow(int(comp[2]),2)))
+    HOME.setProperty('BW'+prop, str(contrast))
+    HOME.setProperty('LUMA'+prop, str(luma))
+def linear_gradient(cname, start_hex="000000", finish_hex="FFFFFF", n=10, sleep=50, s_thread_check=""):
+    if start_hex == '' or finish_hex == '':
+        return
+    s = hex_to_RGB('#' + start_hex)
+    f = hex_to_RGB('#' + finish_hex)
+    RGB_list = [s]
+    for t in range(1, n):
+        if HOME.getProperty(s_thread_check)[2:8] != start_hex:
+            return
+        curr_vector = [
+            int(s[j] + (float(t)/(n-1))*(f[j]-s[j]))
+            for j in range(3)
+        ]
+        HOME.setProperty(cname, RGB_to_hex(curr_vector))
+        xbmc.sleep(sleep)
+    return
+def hex_to_RGB(hex):
+    return [int(hex[i:i+2], 16) for i in range(1,6,2)]
+def RGB_to_hex(RGB):
+    RGB = [int(x) for x in RGB]
+    return "FF"+"".join(["0{0:x}".format(v) if v < 16 else "{0:x}".format(v) for v in RGB])
 def rgb_to_hsv(r, g, b):
     maxc = max(r, g, b)
     minc = min(r, g, b)
@@ -866,32 +789,30 @@ def Check_XBMC_Internal(targetfile, filterimage):
     xbmc_vid_cache_file = os.path.join("special://profile/Thumbnails/Video", cachedthumb[0], cachedthumb)
     xbmc_cache_filep = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
     xbmc_cache_filej = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".png")
-    for i in range(1, 4):
-        if xbmcvfs.exists(xbmc_cache_filej):
-            return xbmc.translatePath(xbmc_cache_filej)
-        elif xbmcvfs.exists(xbmc_cache_filep):
-            return xbmc.translatePath(xbmc_cache_filep)
-        elif xbmcvfs.exists(xbmc_vid_cache_file):
-            return xbmc.translatePath(xbmc_vid_cache_file)
-        else:
-            filterimage = urllib.unquote(filterimage.replace("image://", "")).decode('utf8')
-            if filterimage.endswith("/"):
-                filterimage = filterimage[:-1]
-            xbmcvfs.copy(filterimage, targetfile)
-            return targetfile
+    if xbmcvfs.exists(xbmc_cache_filej):
+        return xbmc.translatePath(xbmc_cache_filej)
+    elif xbmcvfs.exists(xbmc_cache_filep):
+        return xbmc.translatePath(xbmc_cache_filep)
+    elif xbmcvfs.exists(xbmc_vid_cache_file):
+        return xbmc.translatePath(xbmc_vid_cache_file)
+    else:
+        filterimage = urllib.unquote(filterimage.replace("image://", "")).decode('utf8')
+        if filterimage.endswith("/"):
+            filterimage = filterimage[:-1]
+        xbmcvfs.copy(filterimage, targetfile)
+        return targetfile
     return
 def Check_XBMC_Cache(targetfile):
     cachedthumb = xbmc.getCacheThumbName(targetfile)
     xbmc_vid_cache_file = os.path.join("special://profile/Thumbnails/Video", cachedthumb[0], cachedthumb)
     xbmc_cache_filep = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
     xbmc_cache_filej = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".png")
-    for i in range(1, 4):
-        if xbmcvfs.exists(xbmc_cache_filej):
-            return xbmc.translatePath(xbmc_cache_filej)
-        elif xbmcvfs.exists(xbmc_cache_filep):
-            return xbmc.translatePath(xbmc_cache_filep)
-        elif xbmcvfs.exists(xbmc_vid_cache_file):
-            return xbmc.translatePath(xbmc_vid_cache_file)
+    if xbmcvfs.exists(xbmc_cache_filej):
+        return xbmc.translatePath(xbmc_cache_filej)
+    elif xbmcvfs.exists(xbmc_cache_filep):
+        return xbmc.translatePath(xbmc_cache_filep)
+    elif xbmcvfs.exists(xbmc_vid_cache_file):
+        return xbmc.translatePath(xbmc_vid_cache_file)
     if xbmcvfs.exists(targetfile):
         return targetfile
     return ""
@@ -927,3 +848,20 @@ def log(txt):
     xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGDEBUG)
 def prettyprint(string):
     log(simplejson.dumps(string, sort_keys=True, indent=4, separators=(',', ': ')))
+ColorBox_function_map = {
+        'blur':         blur,
+        'pixelate':     pixelate,
+        'shiftblock':   shiftblock,
+        'pixelnone':    pixelnone,
+        'pixelwaves':   pixelwaves,
+        'pixelrandom':  pixelrandom,
+        'pixelfile':    pixelfile,
+        'pixelfedges':  pixelfedges,
+        'pixeledges':   pixeledges,
+        'fakelight':    fakelight,
+        'twotone':      twotone,
+        'posterize':    posterize,
+        'distort':      distort,
+        'halftone':     halftone,
+        'dither':       dither,
+        'dataglitch':   dataglitch}

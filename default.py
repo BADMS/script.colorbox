@@ -13,23 +13,6 @@ ADDON_ID =          ADDON.getAddonInfo('id')
 ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
 HOME =              xbmcgui.Window(10000)
 from resources.lib import Utils
-ColorBox_function_map = {
-        'blur':         Utils.blur,
-        'pixelate':     Utils.pixelate,
-        'shiftblock':   Utils.shiftblock,
-        'pixelnone':    Utils.pixelnone,
-        'pixelwaves':   Utils.pixelwaves,
-        'pixelrandom':  Utils.pixelrandom,
-        'pixelfile':    Utils.pixelfile,
-        'pixelfedges':  Utils.pixelfedges,
-        'pixeledges':   Utils.pixeledges,
-        'fakelight':    Utils.fakelight,
-        'twotone':      Utils.twotone,
-        'posterize':    Utils.posterize,
-        'distort':      Utils.distort,
-        'halftone':     Utils.halftone,
-        'dither':       Utils.dither,
-        'dataglitch':   Utils.dataglitch}
 ColorBox_settings_map = {
         'pixelsize':    Utils.set_pixelsize,
         'bitsize':      Utils.set_bitsize,
@@ -70,10 +53,7 @@ class ColorBoxMain:
                         self.image_prev_FIVE = self.image_now_FIVE
                         HOME.setProperty("OldImageColorFIVE", HOME.getProperty("ImageColorFIVE"))
                         HOME.setProperty("OldImageCColorFIVE", HOME.getProperty("ImageCColorFIVE"))
-                        PROC_im = self.image_now_FIVE
-                        for cmarg in FIVE_daemon_set.strip().split('-'):
-                            PROC_im = ColorBox_function_map[cmarg](PROC_im)
-                        HOME.setProperty('ImageFilterFIVE', PROC_im)
+                        HOME.setProperty('ImageFilterFIVE', Utils.ColorBox_go_map(self.image_now_FIVE, FIVE_daemon_set))
                         HOME.setProperty('ImageFIVE', self.image_now_FIVE)
                         HOME.setProperty('Daemon_FIVE_ImageUpdating', '1')
                         tm1 = Thread(target=Utils.Color_Only, args=(self.image_now_FIVE, "ImageColorFIVE", "ImageCColorFIVE"))
@@ -91,10 +71,7 @@ class ColorBoxMain:
                         self.image_prev_cfa = self.image_now_cfa
                         HOME.setProperty("OldImageColorcfa", HOME.getProperty("ImageColorcfa"))
                         HOME.setProperty("OldImageCColorcfa", HOME.getProperty("ImageCColorcfa"))
-                        PROC_im = self.image_now_cfa
-                        for cmarg in cfa_daemon_set.strip().split('-'):
-                            PROC_im = ColorBox_function_map[cmarg](PROC_im)
-                        HOME.setProperty('ImageFiltercfa', PROC_im)
+                        HOME.setProperty('ImageFiltercfa', Utils.ColorBox_go_map(self.image_now_cfa, cfa_daemon_set))
                         HOME.setProperty('DaemonFanartImageUpdating', '1')
                         tf = Thread(target=Utils.Color_Only, args=(self.image_now_cfa, "ImageColorcfa", "ImageCColorcfa"))
                         tf.start()
@@ -120,10 +97,7 @@ class ColorBoxMain:
                         self.image_prev_EIGHT = self.image_now_EIGHT
                         HOME.setProperty("OldImageColorEIGHT", HOME.getProperty("ImageColorEIGHT"))
                         HOME.setProperty("OldImageCColorEIGHT", HOME.getProperty("ImageCColorEIGHT"))
-                        PROC_im = self.image_now_EIGHT
-                        for cmarg in EIGHT_daemon_set.strip().split('-'):
-                            PROC_im = ColorBox_function_map[cmarg](PROC_im)
-                        HOME.setProperty('ImageFilterEIGHT', PROC_im)
+                        HOME.setProperty('ImageFilterEIGHT', Utils.ColorBox_go_map(self.image_now_EIGHT, EIGHT_daemon_set))
                         HOME.setProperty('ImageEIGHT', self.image_now_EIGHT)
                         HOME.setProperty('Daemon_EIGHT_ImageUpdating', '1')
                         tm4 = Thread(target=Utils.Color_Only, args=(self.image_now_EIGHT, "ImageColorEIGHT", "ImageCColorEIGHT"))
@@ -157,10 +131,7 @@ class ColorBoxMain:
                                 if not self.prefix.endswith("."):
                                     self.prefix = self.prefix + "."
                         if self.info != "":
-                            PROC_im = self.id
-                            for cmarg in self.info.strip().split('-'):
-                                PROC_im = ColorBox_function_map[cmarg](PROC_im)
-                            HOME.setProperty(self.prefix + 'ImageFilterNINE', PROC_im)
+                            HOME.setProperty(self.prefix + 'ImageFilterNINE', Utils.ColorBox_go_map(self.id, self.info))
                             HOME.setProperty(self.prefix + "ImageNINE", self.id)
                             HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
                             imagecolor, cimagecolor = Utils.Color_Only_Manual(self.id, self.prefix + "ImageColorNINE")
@@ -177,10 +148,7 @@ class ColorBoxMain:
                     self.image_now_MULTI = xbmc.getInfoLabel("Control.GetLabel(" + str(self.idm) + ")")
                     if self.image_now_MULTI != HOME.getProperty(self.wpnam) and self.image_now_MULTI != "":
                         try:
-                            PROC_im = self.image_now_MULTI
-                            for cmarg in self.mfx.strip().split('-'):
-                                PROC_im = ColorBox_function_map[cmarg](PROC_im)
-                            HOME.setProperty(self.wpnam + "ImageFilter", PROC_im)
+                            HOME.setProperty(self.wpnam + "ImageFilter", Utils.ColorBox_go_map(self.image_now_MULTI, self.mfx))
                             HOME.setProperty(self.wpnam + "Image", self.image_now_MULTI)
                             imagecolor, cimagecolor = Utils.Color_Only_Manual(self.image_now_MULTI, self.wpnam + "ImageColor")
                             HOME.setProperty(self.wpnam + "ImageColor", imagecolor)
@@ -287,10 +255,7 @@ if __name__ == "__main__":
         us1 = Thread(target=Utils.Shuffle_Set, args=(idm,varm))
         us1.start()
     elif infom != "" and idm != "":
-        PROC_im = idm
-        for cmarg in infom.strip().split('-'):
-            PROC_im = ColorBox_function_map[cmarg](PROC_im)
-        HOME.setProperty(prefixm + "ImageFilter", PROC_im)
+        HOME.setProperty(prefixm + "ImageFilter", Utils.ColorBox_go_map(idm, infom))
         HOME.setProperty(prefixm + "Image", idm)
         imagecolor, cimagecolor = Utils.Color_Only_Manual(idm, prefixm + "ImageColor")
         HOME.setProperty(prefixm + "ImageColor", imagecolor)
