@@ -95,7 +95,7 @@ def ColorBox_go_map(filterimage, imageops):
             filename = filename + cmarg + ColorBox_filename_map[cmarg]()
     except Exception as e:
         log("cbmerr: %s op: %s" % (e,imageops))
-    targetfile = os.path.join(ADDON_DATA_PATH, filename + '.png')
+    targetfile = os.path.join(ADDON_DATA_PATH, filename + '_' + '.png')
     Cache = Check_XBMC_Cache(targetfile)
     if Cache != "": return Cache
     Img = Check_XBMC_Internal(targetfile, filterimage)
