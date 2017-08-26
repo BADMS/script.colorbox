@@ -46,37 +46,37 @@ class ColorBoxMain:
             FIVE_daemon_set = HOME.getProperty("FIVE_daemon_set")
             if not FIVE_daemon_set == '':
                 self.image_now_FIVE = xbmc.getInfoLabel("Control.GetLabel(7975)")
-                if self.image_now_FIVE != self.image_prev_FIVE and self.image_now_FIVE != "" or HOME.getProperty("FIVE_daemon_fire"):
+                if (self.image_now_FIVE != self.image_prev_FIVE and self.image_now_FIVE != "") or HOME.getProperty("FIVE_daemon_fire"):
+                    HOME.setProperty('Daemon_FIVE_ImageUpdating', '0')
                     try:
-                        HOME.setProperty('Daemon_FIVE_ImageUpdating', '0')
                         HOME.clearProperty("FIVE_daemon_fire")
                         self.image_prev_FIVE = self.image_now_FIVE
                         HOME.setProperty("OldImageColorFIVE", HOME.getProperty("ImageColorFIVE"))
                         HOME.setProperty("OldImageCColorFIVE", HOME.getProperty("ImageCColorFIVE"))
                         HOME.setProperty('ImageFilterFIVE', Utils.ColorBox_go_map(self.image_now_FIVE, FIVE_daemon_set))
                         HOME.setProperty('ImageFIVE', self.image_now_FIVE)
-                        HOME.setProperty('Daemon_FIVE_ImageUpdating', '1')
                         tm1 = Thread(target=Utils.Color_Only, args=(self.image_now_FIVE, "ImageColorFIVE", "ImageCColorFIVE"))
                         tm1.start()
                     except Exception as e:
                         Utils.log("5err: %s img: %s" % (e,self.image_now_FIVE))
+                    HOME.setProperty('Daemon_FIVE_ImageUpdating', '1')
             cfa_daemon_set = HOME.getProperty("cfa_daemon_set")
             #curr_window = xbmc.getInfoLabel("Window.Property(xmlfile)")
             if not cfa_daemon_set == '':
                 self.image_now_cfa = xbmc.getInfoLabel("ListItem.Art(fanart)")
                 if self.image_now_cfa != self.image_prev_cfa and self.image_now_cfa != "" or HOME.getProperty("cfa_daemon_fire"):
+                    HOME.setProperty('Daemon_cfa_ImageUpdating', '0')
                     try:
-                        HOME.setProperty('DaemonFanartImageUpdating', '0')
                         HOME.clearProperty("cfa_daemon_fire")
                         self.image_prev_cfa = self.image_now_cfa
                         HOME.setProperty("OldImageColorcfa", HOME.getProperty("ImageColorcfa"))
                         HOME.setProperty("OldImageCColorcfa", HOME.getProperty("ImageCColorcfa"))
                         HOME.setProperty('ImageFiltercfa', Utils.ColorBox_go_map(self.image_now_cfa, cfa_daemon_set))
-                        HOME.setProperty('DaemonFanartImageUpdating', '1')
                         tf = Thread(target=Utils.Color_Only, args=(self.image_now_cfa, "ImageColorcfa", "ImageCColorcfa"))
                         tf.start()
                     except Exception as e:
                         Utils.log("cerr: %s img: %s" % (e,self.image_now_cfa))
+                    HOME.setProperty('Daemon_cfa_ImageUpdating', '1')
             if not HOME.getProperty("SEVEN_daemon_set") == '':
                 self.image_now_SEVEN = xbmc.getInfoLabel("Control.GetLabel(7977)")
                 if self.image_now_SEVEN != self.image_prev_SEVEN and self.image_now_SEVEN != "":
@@ -91,23 +91,23 @@ class ColorBoxMain:
             if not HOME.getProperty("EIGHT_daemon_set") == '':
                 self.image_now_EIGHT = xbmc.getInfoLabel("Control.GetLabel(7978)")
                 if self.image_now_EIGHT != self.image_prev_EIGHT and self.image_now_EIGHT != "" or HOME.getProperty("EIGHT_daemon_fire"):
+                    HOME.setProperty('Daemon_EIGHT_ImageUpdating', '0')
                     try:
-                        HOME.setProperty('Daemon_EIGHT_ImageUpdating', '0')
                         HOME.clearProperty("EIGHT_daemon_fire")
                         self.image_prev_EIGHT = self.image_now_EIGHT
                         HOME.setProperty("OldImageColorEIGHT", HOME.getProperty("ImageColorEIGHT"))
                         HOME.setProperty("OldImageCColorEIGHT", HOME.getProperty("ImageCColorEIGHT"))
                         HOME.setProperty('ImageFilterEIGHT', Utils.ColorBox_go_map(self.image_now_EIGHT, EIGHT_daemon_set))
                         HOME.setProperty('ImageEIGHT', self.image_now_EIGHT)
-                        HOME.setProperty('Daemon_EIGHT_ImageUpdating', '1')
                         tm4 = Thread(target=Utils.Color_Only, args=(self.image_now_EIGHT, "ImageColorEIGHT", "ImageCColorEIGHT"))
                         tm4.start()
                     except Exception as e:
                         Utils.log("8err: %s img: %s" % (e,self.image_now_EIGHT))
+                    HOME.setProperty('Daemon_EIGHT_ImageUpdating', '1')
             self.manual_set_NINE = HOME.getProperty("NINE_manual_set")
             if self.manual_set_NINE != '' and self.manual_set_NINE != self.prefix_prev_NINE or HOME.getProperty("NINE_daemon_fire"):
+                HOME.setProperty('Daemon_NINE_ImageUpdating', '0')
                 try:
-                    HOME.setProperty('Daemon_NINE_ImageUpdating', '0')
                     HOME.clearProperty("NINE_daemon_fire")
                     self.prefix_prev_NINE = self.manual_set_NINE
                     self.info = ""
@@ -133,13 +133,13 @@ class ColorBoxMain:
                         if self.info != "":
                             HOME.setProperty(self.prefix + 'ImageFilterNINE', Utils.ColorBox_go_map(self.id, self.info))
                             HOME.setProperty(self.prefix + "ImageNINE", self.id)
-                            HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
                             imagecolor, cimagecolor = Utils.Color_Only_Manual(self.id, self.prefix + "ImageColorNINE")
                             HOME.setProperty(self.prefix + "ImageColorNINE", imagecolor)
                             HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
                         elif self.var != "":
                             #change various settings
                             ColorBox_settings_map[self.var](self.set)
+                        HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
                 except Exception as e:
                     Utils.log("9err: %s img: %s" % (e,self.manual_set_NINE))
             if self.ColorBox_multis != []:

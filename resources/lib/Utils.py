@@ -184,13 +184,10 @@ def pixeledges(img):
     return pixelshift(img, "edges")
 def pixelshift(img, ptype="none"):
     #stype; 1=random, 2=edges, 3=waves, 4=file, 5=file_edges, 0=none
-    global threshold
+    global threshold, clength, angle, randomness
     threshold = int(pthreshold)
-    global clength
     clength = int(pclength)
-    global angle
     angle = int(pangle)
-    global randomness
     randomness = float(prandomness)
     
     img = Pixelshift_Image(img, ptype)
