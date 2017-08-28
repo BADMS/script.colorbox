@@ -38,7 +38,7 @@ delta_x =           40
 delta_y =           90
 radius =            1
 pixelsize =         20
-blockSize =         64
+blocksize =         64
 sigma =             0.05
 iterations =        1920
 pthreshold =        100
@@ -57,7 +57,7 @@ colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def fnblur(): return str(radius) + str(quality)
 def fnpixelate(): return str(pixelsize) + str(quality)
-def fnshiftblock(): return str(blockSize) + str(sigma) + str(iterations) + str(quality)
+def fnshiftblock(): return str(blocksize) + str(sigma) + str(iterations) + str(quality)
 def fnpixelnone(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
 def fnpixelwaves(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
 def fnpixelrandom(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
@@ -71,30 +71,13 @@ def fndistort(): return str(delta_x) + str(delta_y) + str(quality)
 def fnhalftone(): return str(quality)
 def fndither(): return str(quality)
 def fndataglitch(): return str(doffset) + str(quality)
-ColorBox_filename_map = {
-        'blur':         fnblur,
-        'pixelate':     fnpixelate,
-        'shiftblock':   fnshiftblock,
-        'pixelnone':    fnpixelnone,
-        'pixelwaves':   fnpixelwaves,
-        'pixelrandom':  fnpixelrandom,
-        'pixelfile':    fnpixelfile,
-        'pixelfedges':  fnpixelfedges,
-        'pixeledges':   fnpixeledges,
-        'fakelight':    fnfakelight,
-        'twotone':      fntwotone,
-        'posterize':    fnposterize,
-        'distort':      fndistort,
-        'halftone':     fnhalftone,
-        'dither':       fndither,
-        'dataglitch':   fndataglitch}
 def ColorBox_go_map(filterimage, imageops):
     try:
         filename = hashlib.md5(filterimage).hexdigest() + '_'
         for cmarg in imageops.strip().split('-'):
             filename = filename + cmarg + ColorBox_filename_map[cmarg]()
     except Exception as e:
-        log("cbmerr: %s op: %s" % (e,imageops))
+        log("ColorBox_go_mapfn: %s ops: %s" % (e,imageops))
     targetfile = os.path.join(ADDON_DATA_PATH, filename + '.png')
     Cache = Check_XBMC_Cache(targetfile)
     if Cache != "": return Cache
@@ -114,7 +97,7 @@ def ColorBox_go_map(filterimage, imageops):
         for cmarg in imageops.strip().split('-'):
             img = ColorBox_function_map[cmarg](img)
     except Exception as e:
-        log("cbmx: %s op: %s" % (e,cmarg))
+        log("ColorBox_go_mapop: %s cmarg: %s" % (e,cmarg))
     img.save(targetfile)
     return targetfile
 def set_quality(new_value):
@@ -167,9 +150,8 @@ def blur(img):
 def pixelate(img):
     return Pixelate_Image(img)
 def shiftblock(img):
-    qiterations = iterations / quality
-    
-    return Shiftblock_Image(img, blockSize, sigma, qiterations)
+    qiterations = iterations / quality    
+    return Shiftblock_Image(img, blocksize, sigma, qiterations)
 def pixelnone(img):
     return pixelshift(img, "none")
 def pixelwaves(img):
@@ -188,8 +170,7 @@ def pixelshift(img, ptype="none"):
     threshold = int(pthreshold)
     clength = int(pclength)
     angle = int(pangle)
-    randomness = float(prandomness)
-    
+    randomness = float(prandomness)    
     img = Pixelshift_Image(img, ptype)
     return img
 def fakelight(img):
@@ -199,7 +180,6 @@ def twotone(img):
 def posterize(img):
     return image_posterize(img,bits)
 def distort(img):
-    
     return image_distort(img,delta_x,delta_y)
 def halftone(img):
     return Halftone_Image(img)
@@ -228,13 +208,13 @@ def Dataglitch_Image(img, channel='r'):
     eval(eval_putdata)
     shifted_image = Image.merge('RGB', (r, g, b))
     return shifted_image
-def Shiftblock_Image(image, blockSize=192, sigma=1.05, iterations=300):
+def Shiftblock_Image(image, blocksize=64, sigma=1.05, iterations=300):
     seed = random.random()
     r = random.Random(seed)
     for i in xrange(iterations):
-        bx = int(r.uniform(0, image.size[0]-blockSize))
-        by = int(r.uniform(0, image.size[1]-blockSize))
-        block = image.crop((bx, by, bx+blockSize-1, by+blockSize-1))
+        bx = int(r.uniform(0, image.size[0]-blocksize))
+        by = int(r.uniform(0, image.size[1]-blocksize))
+        block = image.crop((bx, by, bx+blocksize-1, by+blocksize-1))
         mx = int(math.floor(r.normalvariate(0, sigma)))
         my = int(math.floor(r.normalvariate(0, sigma)))
         image.paste(block, (bx+mx, by+my))
@@ -845,6 +825,23 @@ def log(txt):
     xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGDEBUG)
 def prettyprint(string):
     log(simplejson.dumps(string, sort_keys=True, indent=4, separators=(',', ': ')))
+ColorBox_filename_map = {
+        'blur':         fnblur,
+        'pixelate':     fnpixelate,
+        'shiftblock':   fnshiftblock,
+        'pixelnone':    fnpixelnone,
+        'pixelwaves':   fnpixelwaves,
+        'pixelrandom':  fnpixelrandom,
+        'pixelfile':    fnpixelfile,
+        'pixelfedges':  fnpixelfedges,
+        'pixeledges':   fnpixeledges,
+        'fakelight':    fnfakelight,
+        'twotone':      fntwotone,
+        'posterize':    fnposterize,
+        'distort':      fndistort,
+        'halftone':     fnhalftone,
+        'dither':       fndither,
+        'dataglitch':   fndataglitch}
 ColorBox_function_map = {
         'blur':         blur,
         'pixelate':     pixelate,
