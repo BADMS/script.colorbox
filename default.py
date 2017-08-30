@@ -25,6 +25,7 @@ ColorBox_settings_map = {
         'main':         Utils.set_main,
         'desat':        Utils.set_desat,
         'sharp':        Utils.set_sharp,
+        'blend':        Utils.set_blend,
         'quality':      Utils.set_quality}
 ColorBox_strip =        ('[CR]', ' '), ('<BR>', ' '), ('<br>', ' '), ('&#10;', ' '), ('&&#10;', ' ')
 #ColorBox_strip =       ('[B]', ''), ('[/B]', ''), ('[CR]', ' ')

@@ -50,8 +50,9 @@ black =             "#000000"
 white =             "#ffffff"
 bits =              1
 doffset =           100
-desat =             0.1
+desat =             0.3
 sharp =             0.0
+blend =             0.5
 quality =           8
 color_comp =        "main:hls*0.33;0;0@hsv*0;-0.1;0.3" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*-;-0.1;0.3@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 color_main =        "main:" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
@@ -77,7 +78,7 @@ def fndesaturate(): return str(desat) + str(quality)
 def fnsharpness(): return str(sharp) + str(quality)
 def ColorBox_go_map(filterimage, imageops):
     try:
-        filename = hashlib.md5(filterimage).hexdigest() + '_'
+        filename = hashlib.md5(filterimage).hexdigest() + '_' + str(blend)
         for cmarg in imageops.strip().split('-'):
             filename = filename + cmarg + ColorBox_filename_map[cmarg]()
     except Exception as e:
@@ -97,11 +98,14 @@ def ColorBox_go_map(filterimage, imageops):
         qheight += 1
     img = img.resize((qwidth, qheight), Image.ANTIALIAS)
     img = img.convert('RGB')
+    imgor = img
     try:
         for cmarg in imageops.strip().split('-'):
             img = ColorBox_function_map[cmarg](img)
     except Exception as e:
         log("ColorBox_go_mapop: %s cmarg: %s" % (e,cmarg))
+    if blend < 1.0:
+        img = Image.blend(imgor, img, blend)
     img.save(targetfile)
     return targetfile
 def set_quality(new_value):
@@ -152,8 +156,11 @@ def set_sharp(new_value):
     global sharp
     sharp = int(new_value) / 100.0
     xbmc.executebuiltin('Skin.SetString(colorbox_sharp,'+str(new_value)+')')
+def set_blend(new_value):
+    global blend
+    blend = int(new_value) / 1.0
+    xbmc.executebuiltin('Skin.SetString(colorbox_blend,'+str(new_value)+')')
 def dataglitch(img):
-    img = img.convert('RGB')
     return Dataglitch_Image(img)
 def blur(img):
     imgfilter = MyGaussianBlur(radius=radius)
@@ -269,7 +276,7 @@ def Halftone_Image(img):
     if qh % 2 != 0:
         qh += 1
     img = img.resize((qw, qh), Image.ANTIALIAS)
-    hinew = Image.new("RGBA", (qw, qh), "white")
+    hinew = Image.new('RGB', (qw, qh), "white")
     hipixels = hinew.load()
     for i in range(0, qw, 2):
         for j in range(0, qh, 2):
@@ -315,7 +322,7 @@ def Dither_Image(img):
     if qh % 2 != 0:
         qh += 1
     img = img.resize((qw, qh), Image.ANTIALIAS)
-    dinew = Image.new("RGBA", (qw, qh), "white")
+    dinew = Image.new('RGB', (qw, qh), "white")
     dipixels = dinew.load()
     for i in range(0, qw, 2):
         for j in range(0, qh, 2):
@@ -349,7 +356,7 @@ def random_width():
 	return(width)
 def int_edges(pixels, img):
 	edges = img.filter(ImageFilter.FIND_EDGES)
-	edges = edges.convert('RGBA')
+	edges = edges.convert('RGB')
 	edge_data = edges.load()
 	filter_pixels = []
 	edge_pixels = []
@@ -407,7 +414,6 @@ def int_waves(pixels, img):
 def int_file(pixels, img):
 	intervals = []
 	file_pixels = []
-	img = img.convert('RGBA')
 	data = img.load()
 	for y in range(img.size[1]):
 		file_pixels.append([])
@@ -427,7 +433,7 @@ def int_file(pixels, img):
 def int_file_edges(pixels, img):
 	img = img.resize((len(pixels[0]), len(pixels)), Image.ANTIALIAS)
 	edges = img.filter(ImageFilter.FIND_EDGES)
-	edges = edges.convert('RGBA')
+	edges = edges.convert('RGB')
 	edge_data = edges.load()
 	filter_pixels = []
 	edge_pixels = []
@@ -477,10 +483,9 @@ def sort_image(pixels, intervals):
 		sorted_pixels.append(row)
 	return(sorted_pixels)
 def pixel_sort(img, int_function):
-	img.convert('RGBA')
 	img = img.rotate(angle, expand = True)
 	data = img.load()
-	new = Image.new('RGBA', img.size)
+	new = Image.new('RGB', img.size)
 	pixels = []
 	for y in range(img.size[1]):
 		pixels.append([])
@@ -510,14 +515,14 @@ def Pixelshift_Image(img, stype):
     return image
 def image_recolorize(src, black="#000000", white="#FFFFFF"):
     return ImageOps.colorize(ImageOps.grayscale(src), black, white)
-def image_posterize(src, bits="2"):
-    return ImageOps.posterize(src, bits)
+def image_posterize(img, bits=1):
+    return ImageOps.posterize(img, bits)
 def fake_light(img, tilesize=50):
     WIDTH, HEIGHT = img.size
     for x in xrange(0, WIDTH, tilesize):
         for y in xrange(0, HEIGHT, tilesize):
             br = int(255 * (1 - x / float(WIDTH) * y / float(HEIGHT)))
-            tile = Image.new("RGBA", (tilesize, tilesize), (255,255,255,128))
+            tile = Image.new('RGB', (tilesize, tilesize), (255,255,255,128))
             img.paste((br,br,br), (x, y, x + tilesize, y + tilesize), mask=tile)
     return img
 def image_distort(img, delta_x=50, delta_y=90):
