@@ -23,6 +23,8 @@ ColorBox_settings_map = {
         'lgsteps':      Utils.set_lgsteps,
         'comp':         Utils.set_comp,
         'main':         Utils.set_main,
+        'desat':        Utils.set_desat,
+        'sharp':        Utils.set_sharp,
         'quality':      Utils.set_quality}
 ColorBox_strip =        ('[CR]', ' '), ('<BR>', ' '), ('<br>', ' '), ('&#10;', ' '), ('&&#10;', ' ')
 #ColorBox_strip =       ('[B]', ''), ('[/B]', ''), ('[CR]', ' ')

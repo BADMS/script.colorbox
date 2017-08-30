@@ -49,10 +49,12 @@ lightsize =         192
 black =             "#000000"
 white =             "#ffffff"
 bits =              1
-doffset=            100
+doffset =           100
+desat =             0.1
+sharp =             0.0
 quality =           8
-color_comp =        "main:hls*0.5;0.0;0.0@fhls*-;0.5;0.5" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*-;-0.1;0.3@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
-color_main =        "main:fhls*-;0.5;0.5" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
+color_comp =        "main:hls*0.33;0;0@hsv*0;-0.1;0.3" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*-;-0.1;0.3@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
+color_main =        "main:" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def fnblur(): return str(radius) + str(quality)
@@ -71,6 +73,8 @@ def fndistort(): return str(delta_x) + str(delta_y) + str(quality)
 def fnhalftone(): return str(quality)
 def fndither(): return str(quality)
 def fndataglitch(): return str(doffset) + str(quality)
+def fndesaturate(): return str(desat) + str(quality)
+def fnsharpness(): return str(sharp) + str(quality)
 def ColorBox_go_map(filterimage, imageops):
     try:
         filename = hashlib.md5(filterimage).hexdigest() + '_'
@@ -140,12 +144,28 @@ def set_main(new_value):
     global color_main
     color_main = str(new_value)
     xbmc.executebuiltin('Skin.SetString(colorbox_main,'+str(new_value)+')')
+def set_desat(new_value):
+    global desat
+    desat = int(new_value) / 100.0
+    xbmc.executebuiltin('Skin.SetString(colorbox_desat,'+str(new_value)+')')
+def set_sharp(new_value):
+    global sharp
+    sharp = int(new_value) / 100.0
+    xbmc.executebuiltin('Skin.SetString(colorbox_sharp,'+str(new_value)+')')
 def dataglitch(img):
     img = img.convert('RGB')
     return Dataglitch_Image(img)
 def blur(img):
     imgfilter = MyGaussianBlur(radius=radius)
     img = img.filter(imgfilter)
+    return img
+def desaturate(img):
+    converter = ImageEnhance.Color(img)
+    img = converter.enhance(desat)
+    return img
+def sharpness(img):
+    converter = ImageEnhance.Sharpness(img)
+    img = converter.enhance(sharp)
     return img
 def pixelate(img):
     return Pixelate_Image(img)
@@ -841,6 +861,8 @@ ColorBox_filename_map = {
         'distort':      fndistort,
         'halftone':     fnhalftone,
         'dither':       fndither,
+        'desaturate':   fndesaturate,
+        'sharpness':    fnsharpness,
         'dataglitch':   fndataglitch}
 ColorBox_function_map = {
         'blur':         blur,
@@ -858,4 +880,6 @@ ColorBox_function_map = {
         'distort':      distort,
         'halftone':     halftone,
         'dither':       dither,
+        'desaturate':   desaturate,
+        'sharpness':    sharpness,
         'dataglitch':   dataglitch}
