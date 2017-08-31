@@ -45,14 +45,17 @@ pthreshold =        100
 pclength =          50
 pangle =            00
 prandomness =       10
-lightsize =         192
 black =             "#000000"
 white =             "#ffffff"
 bits =              1
 doffset =           100
 desat =             0.3
 sharp =             0.0
-blend =             0.5
+atsample =          10
+atscale =           1
+atpercentage =      0
+atangles =          [0,15,30,45]
+blend =             1
 quality =           8
 color_comp =        "main:hls*0.33;0;0@hsv*0;-0.1;0.3" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*-;-0.1;0.3@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 color_main =        "main:" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
@@ -67,11 +70,11 @@ def fnpixelrandom(): return str(pthreshold) + str(pclength) + str(pangle) + str(
 def fnpixelfile(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
 def fnpixelfedges(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
 def fnpixeledges(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
-def fnfakelight(): return str(lightsize) + str(quality)
 def fntwotone(): return str(black) + str(white) + str(quality)
 def fnposterize(): return str(bits) + str(quality)
 def fndistort(): return str(delta_x) + str(delta_y) + str(quality)
 def fnhalftone(): return str(quality)
+def fnangletone(): return str(atsample) + str(atscale) + str(atpercentage) + ''.join(str(v) for v in atangles) + str(quality)
 def fndither(): return str(quality)
 def fndataglitch(): return str(doffset) + str(quality)
 def fndesaturate(): return str(desat) + str(quality)
@@ -200,8 +203,6 @@ def pixelshift(img, ptype="none"):
     randomness = float(prandomness)    
     img = Pixelshift_Image(img, ptype)
     return img
-def fakelight(img):
-    return fake_light(img,lightsize)
 def twotone(img):
     return image_recolorize(img,black,white)
 def posterize(img):
@@ -210,6 +211,8 @@ def distort(img):
     return image_distort(img,delta_x,delta_y)
 def halftone(img):
     return Halftone_Image(img)
+def angletone(img):
+    return Angletone_Image(img, atsample, atscale, atpercentage, atangles)
 def dither(img):
     return Dither_Image(img)
 def Pixelate_Image(img):
@@ -246,6 +249,11 @@ def Shiftblock_Image(image, blocksize=64, sigma=1.05, iterations=300):
         my = int(math.floor(r.normalvariate(0, sigma)))
         image.paste(block, (bx+mx, by+my))
     return image
+def Angletone_Image(img, sample, scale, percentage, angles):
+    cmyk = anglegcr(img, percentage)
+    dots = anglehalftone(img, cmyk, sample, scale, angles)
+    image = Image.merge('CMYK', dots)
+    return image.convert('RGB')
 def get_pixel(image, i, j):
     gw, gh = image.size
     if i > gw or j > gh:
@@ -345,6 +353,55 @@ def Dither_Image(img):
             dipixels[i + 1, j]     = (r[2], g[2], b[2])
             dipixels[i + 1, j + 1] = (r[3], g[3], b[3])
     return dinew
+def anglegcr(img, percentage):
+    """
+    Basic "Gray Component Replacement" function. Returns a CMYK image with 
+    percentage gray component removed from the CMY channels and put in the
+    K channel, ie. for percentage=100, (41, 100, 255, 0) >> (0, 59, 214, 41)
+    """
+    cmyk_im = img.convert('CMYK')
+    if not percentage:
+        return cmyk_im
+    cmyk_im = cmyk_im.split()
+    cmyk = []
+    for i in xrange(4):
+        cmyk.append(cmyk_im[i].load())
+    for x in xrange(img.size[0]):
+        for y in xrange(img.size[1]):
+            gray = min(cmyk[0][x,y], cmyk[1][x,y], cmyk[2][x,y]) * percentage / 100
+            for i in xrange(3):
+                cmyk[i][x,y] = cmyk[i][x,y] - gray
+            cmyk[3][x,y] = gray
+    return Image.merge('CMYK', cmyk_im)
+def anglehalftone(img, cmyk, sample, scale, angles):
+    '''Returns list of half-tone images for cmyk image. sample (pixels), 
+       determines the sample box size from the original image. The maximum 
+       output dot diameter is given by sample * scale (which is also the number 
+       of possible dot sizes). So sample=1 will presevere the original image 
+       resolution, but scale must be >1 to allow variation in dot size.'''
+    cmyk = cmyk.split()
+    dots = []
+    for channel, angle in zip(cmyk, angles):
+        channel = channel.rotate(angle, expand=1)
+        size = channel.size[0]*scale, channel.size[1]*scale
+        half_tone = Image.new('L', size)
+        draw = ImageDraw.Draw(half_tone)
+        for x in xrange(0, channel.size[0], sample):
+            for y in xrange(0, channel.size[1], sample):
+                box = channel.crop((x, y, x + sample, y + sample))
+                stat = ImageStat.Stat(box)
+                diameter = (stat.mean[0] / 255)**0.5
+                edge = 0.5*(1-diameter)
+                x_pos, y_pos = (x+edge)*scale, (y+edge)*scale
+                box_edge = sample*diameter*scale
+                draw.ellipse((x_pos, y_pos, x_pos + box_edge, y_pos + box_edge), fill=255)
+        half_tone = half_tone.rotate(-angle, expand=1)
+        width_half, height_half = half_tone.size
+        xx=(width_half-img.size[0]*scale) / 2
+        yy=(height_half-img.size[1]*scale) / 2
+        half_tone = half_tone.crop((xx, yy, xx + img.size[0]*scale, yy + img.size[1]*scale))
+        dots.append(half_tone)
+    return dots
 def sort_interval(interval):
 	if interval == []:
 		return []
@@ -517,14 +574,6 @@ def image_recolorize(src, black="#000000", white="#FFFFFF"):
     return ImageOps.colorize(ImageOps.grayscale(src), black, white)
 def image_posterize(img, bits=1):
     return ImageOps.posterize(img, bits)
-def fake_light(img, tilesize=50):
-    WIDTH, HEIGHT = img.size
-    for x in xrange(0, WIDTH, tilesize):
-        for y in xrange(0, HEIGHT, tilesize):
-            br = int(255 * (1 - x / float(WIDTH) * y / float(HEIGHT)))
-            tile = Image.new('RGB', (tilesize, tilesize), (255,255,255,128))
-            img.paste((br,br,br), (x, y, x + tilesize, y + tilesize), mask=tile)
-    return img
 def image_distort(img, delta_x=50, delta_y=90):
     WIDTH, HEIGHT = img.size
     img_data = img.load()
@@ -860,11 +909,11 @@ ColorBox_filename_map = {
         'pixelfile':    fnpixelfile,
         'pixelfedges':  fnpixelfedges,
         'pixeledges':   fnpixeledges,
-        'fakelight':    fnfakelight,
         'twotone':      fntwotone,
         'posterize':    fnposterize,
         'distort':      fndistort,
         'halftone':     fnhalftone,
+        'angletone':    fnangletone,
         'dither':       fndither,
         'desaturate':   fndesaturate,
         'sharpness':    fnsharpness,
@@ -879,11 +928,11 @@ ColorBox_function_map = {
         'pixelfile':    pixelfile,
         'pixelfedges':  pixelfedges,
         'pixeledges':   pixeledges,
-        'fakelight':    fakelight,
         'twotone':      twotone,
         'posterize':    posterize,
         'distort':      distort,
         'halftone':     halftone,
+        'angletone':    angletone,
         'dither':       dither,
         'desaturate':   desaturate,
         'sharpness':    sharpness,
