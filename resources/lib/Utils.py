@@ -60,7 +60,6 @@ quality =           8
 color_comp =        "main:hls*0.33;0;0@hsv*0;-0.1;0.3" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*-;-0.1;0.3@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 color_main =        "main:" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 colors_dict =       {}
-quality_object =    object()
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def fnblur(): return str(radius) + str(quality)
 def fnpixelate(): return str(pixelsize) + str(quality)
@@ -81,8 +80,8 @@ def fndither(): return str(quality)
 def fndataglitch(): return str(doffset) + str(quality)
 def fndesaturate(): return str(desat) + str(quality)
 def fnsharpness(): return str(sharp) + str(quality)
-def ColorBox_go_map(filterimage, imageops, gqual=quality_object):
-    if gqual is quality_object: gqual = quality
+def ColorBox_go_map(filterimage, imageops, gqual=0):
+    if gqual == 0: gqual = quality
     try:
         filename = hashlib.md5(filterimage).hexdigest() + '-' + str(blend)
         for cmarg in imageops.strip().split('-'):
