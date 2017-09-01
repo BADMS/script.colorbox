@@ -20,7 +20,7 @@ ADDON =             xbmcaddon.Addon()
 ADDON_ID =          ADDON.getAddonInfo('id')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
 ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
-ADDON_COLORS =      os.path.join(ADDON_DATA_PATH, "colors.txt")
+ADDON_COLORS =      os.path.join(ADDON_DATA_PATH, "colors.db")
 #ADDON_SETTINGS =    os.path.join(ADDON_DATA_PATH, "settings.")
 HOME =              xbmcgui.Window(10000)
 ONE_THIRD =         1.0/3.0
@@ -60,6 +60,7 @@ quality =           8
 color_comp =        "main:hls*0.33;0;0@hsv*0;-0.1;0.3" #[comp|main]:hls*-0.5;0.0;0.1@fhsv*-;-0.1;0.3@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 color_main =        "main:" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 colors_dict =       {}
+quality_object =    object()
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 def fnblur(): return str(radius) + str(quality)
 def fnpixelate(): return str(pixelsize) + str(quality)
@@ -79,36 +80,32 @@ def fndither(): return str(quality)
 def fndataglitch(): return str(doffset) + str(quality)
 def fndesaturate(): return str(desat) + str(quality)
 def fnsharpness(): return str(sharp) + str(quality)
-def ColorBox_go_map(filterimage, imageops):
+def ColorBox_go_map(filterimage, imageops, gqual=quality_object):
+    if gqual is quality_object: gqual = quality
     try:
-        filename = hashlib.md5(filterimage).hexdigest() + '_' + str(blend)
+        filename = hashlib.md5(filterimage).hexdigest() + '-' + str(blend)
         for cmarg in imageops.strip().split('-'):
             filename = filename + cmarg + ColorBox_filename_map[cmarg]()
     except Exception as e:
-        log("ColorBox_go_mapfn: %s ops: %s" % (e,imageops))
+        log("go_mapfn: %s ops: %s" % (e,imageops))
     targetfile = os.path.join(ADDON_DATA_PATH, filename + '.png')
     Cache = Check_XBMC_Cache(targetfile)
     if Cache != "": return Cache
     Img = Check_XBMC_Internal(targetfile, filterimage)
     if not Img: return ""
-    img = Image.open(Img)
-    width, height = img.size
-    qwidth = width / quality
-    qheight = height / quality
-    if qwidth % 2 != 0:
-        qwidth += 1
-    if qheight % 2 != 0:
-        qheight += 1
-    img = img.resize((qwidth, qheight), Image.ANTIALIAS)
+    try:
+        img = Image.open(Img)
+    except Exception as e:
+        log("go_mapof: %s ops: %s" % (e,Img))
+    img = Resize_Image(img, gqual)
     img = img.convert('RGB')
     imgor = img
     try:
         for cmarg in imageops.strip().split('-'):
             img = ColorBox_function_map[cmarg](img)
     except Exception as e:
-        log("ColorBox_go_mapop: %s cmarg: %s" % (e,cmarg))
-    if blend < 1.0:
-        img = Image.blend(imgor, img, blend)
+        log("go_mapop: %s cmarg: %s" % (e,cmarg))
+    if blend < 1: img = Image.blend(imgor, img, blend)
     img.save(targetfile)
     return targetfile
 def set_quality(new_value):
@@ -354,11 +351,6 @@ def Dither_Image(img):
             dipixels[i + 1, j + 1] = (r[3], g[3], b[3])
     return dinew
 def anglegcr(img, percentage):
-    """
-    Basic "Gray Component Replacement" function. Returns a CMYK image with 
-    percentage gray component removed from the CMY channels and put in the
-    K channel, ie. for percentage=100, (41, 100, 255, 0) >> (0, 59, 214, 41)
-    """
     cmyk_im = img.convert('CMYK')
     if not percentage:
         return cmyk_im
@@ -374,11 +366,6 @@ def anglegcr(img, percentage):
             cmyk[3][x,y] = gray
     return Image.merge('CMYK', cmyk_im)
 def anglehalftone(img, cmyk, sample, scale, angles):
-    '''Returns list of half-tone images for cmyk image. sample (pixels), 
-       determines the sample box size from the original image. The maximum 
-       output dot diameter is given by sample * scale (which is also the number 
-       of possible dot sizes). So sample=1 will presevere the original image 
-       resolution, but scale must be >1 to allow variation in dot size.'''
     cmyk = cmyk.split()
     dots = []
     for channel, angle in zip(cmyk, angles):
@@ -644,7 +631,10 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
         Img = Check_XBMC_Internal(targetfile, filterimage)
         if not Img: return "", ""
-        img = Image.open(Img)
+        try:
+            img = Image.open(Img)
+        except Exception as e:
+            Utils.log("co: %s img: %s" % (e,Img))
         img.thumbnail((200, 200))
         img = img.convert('RGB')
         maincolor, cmaincolor = Get_Colors(img, md5)
@@ -668,7 +658,10 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
         Img = Check_XBMC_Internal(targetfile, filterimage)
         if not Img: return "", ""
-        img = Image.open(Img)
+        try:
+            img = Image.open(Img)
+        except Exception as e:
+            Utils.log("com: %s img: %s" % (e,Img))
         img.thumbnail((200, 200))
         img = img.convert('RGB')
         maincolor, cmaincolor = Get_Colors(img, md5)
@@ -875,6 +868,15 @@ def Get_Frequent_Color(img):
         if count > most_frequent_pixel[0]:
             most_frequent_pixel = (count, colour)
     return 'ff%02x%02x%02x' % tuple(most_frequent_pixel[1])
+def Resize_Image(img, scale):
+    width, height = img.size
+    qwidth = width / scale
+    qheight = height / scale
+    if qwidth % 2 != 0:
+        qwidth += 1
+    if qheight % 2 != 0:
+        qheight += 1
+    return img.resize((qwidth, qheight), Image.ANTIALIAS)
 def clamp(x):
     return max(0, min(x, 255))
 def Load_Colors_Dict():
@@ -896,7 +898,7 @@ def log(txt):
     if isinstance(txt, str):
         txt = txt.decode("utf-8")
     message = u'%s: %s' % (ADDON_ID, txt)
-    xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGDEBUG)
+    xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGNOTICE)
 def prettyprint(string):
     log(simplejson.dumps(string, sort_keys=True, indent=4, separators=(',', ': ')))
 ColorBox_filename_map = {
