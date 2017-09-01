@@ -71,6 +71,7 @@ def fnpixelrandom(): return str(pthreshold) + str(pclength) + str(pangle) + str(
 def fnpixelfile(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
 def fnpixelfedges(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
 def fnpixeledges(): return str(pthreshold) + str(pclength) + str(pangle) + str(prandomness) + str(quality)
+def fnfakelight(): return str(lightsize) + str(quality)
 def fntwotone(): return str(black) + str(white) + str(quality)
 def fnposterize(): return str(bits) + str(quality)
 def fndistort(): return str(delta_x) + str(delta_y) + str(quality)
@@ -200,6 +201,8 @@ def pixelshift(img, ptype="none"):
     randomness = float(prandomness)    
     img = Pixelshift_Image(img, ptype)
     return img
+def fakelight(img):
+    return fake_light(img,lightsize)
 def twotone(img):
     return image_recolorize(img,black,white)
 def posterize(img):
@@ -561,6 +564,14 @@ def image_recolorize(src, black="#000000", white="#FFFFFF"):
     return ImageOps.colorize(ImageOps.grayscale(src), black, white)
 def image_posterize(img, bits=1):
     return ImageOps.posterize(img, bits)
+def fake_light(img, tilesize=50):
+    WIDTH, HEIGHT = img.size
+    for x in xrange(0, WIDTH, tilesize):
+        for y in xrange(0, HEIGHT, tilesize):
+            br = int(255 * (1 - x / float(WIDTH) * y / float(HEIGHT)))
+            tile = Image.new('RGB', (tilesize, tilesize), (255,255,255,128))
+            img.paste((br,br,br), (x, y, x + tilesize, y + tilesize), mask=tile)
+    return img
 def image_distort(img, delta_x=50, delta_y=90):
     WIDTH, HEIGHT = img.size
     img_data = img.load()
@@ -911,6 +922,7 @@ ColorBox_filename_map = {
         'pixelfile':    fnpixelfile,
         'pixelfedges':  fnpixelfedges,
         'pixeledges':   fnpixeledges,
+        'fakelight':    fnfakelight,
         'twotone':      fntwotone,
         'posterize':    fnposterize,
         'distort':      fndistort,
@@ -930,6 +942,7 @@ ColorBox_function_map = {
         'pixelfile':    pixelfile,
         'pixelfedges':  pixelfedges,
         'pixeledges':   pixeledges,
+        'fakelight':    fakelight,
         'twotone':      twotone,
         'posterize':    posterize,
         'distort':      distort,
