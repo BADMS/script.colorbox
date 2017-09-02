@@ -644,7 +644,7 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
         try:
             img = Image.open(Img)
         except Exception as e:
-            Utils.log("co: %s img: %s" % (e,Img))
+            log("co: %s img: %s" % (e,Img))
         img.thumbnail((200, 200))
         img = img.convert('RGB')
         maincolor, cmaincolor = Get_Colors(img, md5)
@@ -671,7 +671,7 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
         try:
             img = Image.open(Img)
         except Exception as e:
-            Utils.log("com: %s img: %s" % (e,Img))
+            log("com: %s img: %s" % (e,Img))
         img.thumbnail((200, 200))
         img = img.convert('RGB')
         maincolor, cmaincolor = Get_Colors(img, md5)
