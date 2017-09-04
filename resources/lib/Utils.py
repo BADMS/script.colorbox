@@ -88,6 +88,7 @@ def ColorBox_go_map(filterimage, imageops, gqual=0):
             filename = filename + cmarg + ColorBox_filename_map[cmarg]()
     except Exception as e:
         log("go_mapfn: %s ops: %s" % (e,imageops))
+        return filterimage
     targetfile = os.path.join(ADDON_DATA_PATH, filename + '.png')
     Cache = Check_XBMC_Cache(targetfile)
     if Cache != "": return Cache
@@ -97,6 +98,7 @@ def ColorBox_go_map(filterimage, imageops, gqual=0):
         img = Image.open(Img)
     except Exception as e:
         log("go_mapof: %s ops: %s" % (e,Img))
+        return filterimage
     img = Resize_Image(img, gqual)
     img = img.convert('RGB')
     imgor = img
@@ -105,6 +107,7 @@ def ColorBox_go_map(filterimage, imageops, gqual=0):
             img = ColorBox_function_map[cmarg](img)
     except Exception as e:
         log("go_mapop: %s cmarg: %s" % (e,cmarg))
+        return filterimage
     if blend < 1: img = Image.blend(imgor, img, blend)
     img.save(targetfile)
     return targetfile
@@ -644,7 +647,8 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
         try:
             img = Image.open(Img)
         except Exception as e:
-            log("co: %s img: %s" % (e,Img))
+            log("co: %s img: %s" % (e,filterimage))
+            return "", ""
         img.thumbnail((200, 200))
         img = img.convert('RGB')
         maincolor, cmaincolor = Get_Colors(img, md5)
@@ -671,7 +675,8 @@ def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ff
         try:
             img = Image.open(Img)
         except Exception as e:
-            log("com: %s img: %s" % (e,Img))
+            log("com: %s img: %s" % (e,filterimage))
+            return "", ""
         img.thumbnail((200, 200))
         img = img.convert('RGB')
         maincolor, cmaincolor = Get_Colors(img, md5)
