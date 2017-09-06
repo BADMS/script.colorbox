@@ -81,33 +81,33 @@ def fndataglitch(): return str(doffset) + str(quality)
 def fndesaturate(): return str(desat) + str(quality)
 def fnsharpness(): return str(sharp) + str(quality)
 def ColorBox_go_map(filterimage, imageops, gqual=0):
+    if not filterimage: return
     if gqual == 0: gqual = quality
-    try:
-        filename = hashlib.md5(filterimage).hexdigest() + '---' + str(blend)
-        for cmarg in imageops.strip().split('-'):
-            filename = filename + cmarg + ColorBox_filename_map[cmarg]()
-    except Exception as e:
-        log("go_mapfn: %s ops: %s" % (e,imageops))
+    filename = hashlib.md5(filterimage).hexdigest() + str(blend) + '-'
+    for cmarg in imageops.strip().split('-'):
+        filename = filename + cmarg + ColorBox_filename_map[cmarg]()
     targetfile = os.path.join(ADDON_DATA_PATH, filename + '.png')
     Cache = Check_XBMC_Cache(targetfile)
     if Cache != "": return Cache
     Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return ""
+    if not Img: return
     try:
         img = Image.open(Img)
     except Exception as e:
-        log("go_mapof: %s ops: %s" % (e,Img))
-    img = Resize_Image(img, gqual)
-    img = img.convert('RGB')
-    imgor = img
+        log("go_mapof: %s ops: %s" % (e,filterimage))
+    else:
+        img = Resize_Image(img, gqual)
+        img = img.convert('RGB')
+        imgor = img
     try:
         for cmarg in imageops.strip().split('-'):
             img = ColorBox_function_map[cmarg](img)
     except Exception as e:
         log("go_mapop: %s cmarg: %s" % (e,cmarg))
-    if blend < 1: img = Image.blend(imgor, img, blend)
-    img.save(targetfile)
-    return targetfile
+    else:
+        if blend < 1: img = Image.blend(imgor, img, blend)
+        img.save(targetfile)
+        return targetfile
 def set_quality(new_value):
     global quality
     quality = int(new_value)
@@ -632,6 +632,7 @@ def Show_Percentage():
     except:
         return
 def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='ffffffff'):
+    if not filterimage: return
     md5 = hashlib.md5(filterimage).hexdigest()
     var3 = 'Old' + cname
     var4 = 'Old' + ccname
@@ -662,6 +663,7 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
     #linear_gradient(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 10, var4)
     return imagecolor, cimagecolor
 def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ffffffff'):
+    if not filterimage: return
     md5 = hashlib.md5(filterimage).hexdigest()
     if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:
