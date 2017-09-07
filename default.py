@@ -35,7 +35,6 @@ class ColorBoxMain:
         self._init_vars()
         self._parse_argv()
         if not xbmcvfs.exists(ADDON_DATA_PATH):
-            # addon data path does not exist...create it
             xbmcvfs.mkdir(ADDON_DATA_PATH)
         if self.control == "plugin":
             xbmcplugin.endOfDirectory(self.handle)
@@ -143,7 +142,6 @@ class ColorBoxMain:
                             HOME.setProperty(self.prefix + "ImageColorNINE", imagecolor)
                             HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
                         elif self.var != "":
-                            #change various settings
                             ColorBox_settings_map[self.var](self.set)
                         HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
                 except Exception as e:
@@ -184,7 +182,7 @@ class ColorBoxMain:
         HOME.setProperty("ImageCColorEIGHT", "FFffffff")
         HOME.setProperty("OldImageCColorNINE", "FFffffff")
         HOME.setProperty("ImageCColorNINE", "FFffffff")
-        self.window =           xbmcgui.Window(10000)  # Home Window
+        self.window =           xbmcgui.Window(10000)
         self.control =          None
         self.id =               ""
         self.prefix =           ""

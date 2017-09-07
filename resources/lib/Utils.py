@@ -297,30 +297,30 @@ def Halftone_Image(img):
             gray4 = (p4[0] * 0.299) + (p4[1] * 0.587) + (p4[2] * 0.114)
             sat = (gray1 + gray2 + gray3 + gray4) / 4
             if sat > 223:
-                hipixels[i, j]         = (255, 255, 255) # White
-                hipixels[i, j + 1]     = (255, 255, 255) # White
-                hipixels[i + 1, j]     = (255, 255, 255) # White
-                hipixels[i + 1, j + 1] = (255, 255, 255) # White
+                hipixels[i, j]         = (255, 255, 255)
+                hipixels[i, j + 1]     = (255, 255, 255)
+                hipixels[i + 1, j]     = (255, 255, 255)
+                hipixels[i + 1, j + 1] = (255, 255, 255)
             elif sat > 159:
-                hipixels[i, j]         = (255, 255, 255) # White
-                hipixels[i, j + 1]     = (0, 0, 0)       # Black
-                hipixels[i + 1, j]     = (255, 255, 255) # White
-                hipixels[i + 1, j + 1] = (255, 255, 255) # White
+                hipixels[i, j]         = (255, 255, 255)
+                hipixels[i, j + 1]     = (0, 0, 0)
+                hipixels[i + 1, j]     = (255, 255, 255)
+                hipixels[i + 1, j + 1] = (255, 255, 255)
             elif sat > 95:
-                hipixels[i, j]         = (255, 255, 255) # White
-                hipixels[i, j + 1]     = (0, 0, 0)       # Black
-                hipixels[i + 1, j]     = (0, 0, 0)       # Black
-                hipixels[i + 1, j + 1] = (255, 255, 255) # White
+                hipixels[i, j]         = (255, 255, 255)
+                hipixels[i, j + 1]     = (0, 0, 0)
+                hipixels[i + 1, j]     = (0, 0, 0)
+                hipixels[i + 1, j + 1] = (255, 255, 255)
             elif sat > 32:
-                hipixels[i, j]         = (0, 0, 0)       # Black
-                hipixels[i, j + 1]     = (255, 255, 255) # White
-                hipixels[i + 1, j]     = (0, 0, 0)       # Black
-                hipixels[i + 1, j + 1] = (0, 0, 0)       # Black
+                hipixels[i, j]         = (0, 0, 0)
+                hipixels[i, j + 1]     = (255, 255, 255)
+                hipixels[i + 1, j]     = (0, 0, 0)
+                hipixels[i + 1, j + 1] = (0, 0, 0)
             else:
-                hipixels[i, j]         = (0, 0, 0)       # Black
-                hipixels[i, j + 1]     = (0, 0, 0)       # Black
-                hipixels[i + 1, j]     = (0, 0, 0)       # Black
-                hipixels[i + 1, j + 1] = (0, 0, 0)       # Black
+                hipixels[i, j]         = (0, 0, 0)
+                hipixels[i, j + 1]     = (0, 0, 0)
+                hipixels[i + 1, j]     = (0, 0, 0)
+                hipixels[i + 1, j + 1] = (0, 0, 0)
     return hinew
 def Dither_Image(img):
     qw, qh = img.size
@@ -621,8 +621,6 @@ def Remove_Quotes(label):
             label = label[1:-1]
     return label
 def Show_Percentage():
-    """nitems = int(xbmc.getInfoLabel('Container().NumItems'))
-    for x in range(0, nitems):"""
     try:
         stot = int(xbmc.getInfoLabel('ListItem.Property(TotalEpisodes)'))
         wtot = int(xbmc.getInfoLabel('ListItem.Property(WatchedEpisodes)'))
@@ -641,12 +639,12 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
         filename = md5 + ".png"
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img: return "", ""
+        if not Img: return
         try:
             img = Image.open(Img)
         except Exception as e:
             log("co: %s img: %s" % (e,filterimage))
-            return "", ""
+            return
         img.thumbnail((200, 200))
         img = img.convert('RGB')
         maincolor, cmaincolor = Get_Colors(img, md5)
