@@ -67,7 +67,7 @@ class ColorBoxMain:
             #curr_window = xbmc.getInfoLabel("Window.Property(xmlfile)")
             if not cfa_daemon_set == '':
                 self.image_now_cfa = xbmc.getInfoLabel("ListItem.Art(fanart)")
-                if self.image_now_cfa != self.image_prev_cfa and self.image_now_cfa != "" or HOME.getProperty("cfa_daemon_fire"):
+                if (self.image_now_cfa != self.image_prev_cfa and self.image_now_cfa != "") or HOME.getProperty("cfa_daemon_fire"):
                     HOME.setProperty('Daemon_cfa_ImageUpdating', '0')
                     HOME.clearProperty("cfa_daemon_fire")
                     try:
@@ -94,7 +94,7 @@ class ColorBoxMain:
                         Utils.log("7err: %s img: %s" % (e,self.image_now_SEVEN))
             if not HOME.getProperty("EIGHT_daemon_set") == '':
                 self.image_now_EIGHT = xbmc.getInfoLabel("Control.GetLabel(7978)")
-                if self.image_now_EIGHT != self.image_prev_EIGHT and self.image_now_EIGHT != "" or HOME.getProperty("EIGHT_daemon_fire"):
+                if (self.image_now_EIGHT != self.image_prev_EIGHT and self.image_now_EIGHT != "") or HOME.getProperty("EIGHT_daemon_fire"):
                     HOME.setProperty('Daemon_EIGHT_ImageUpdating', '0')
                     HOME.clearProperty("EIGHT_daemon_fire")
                     try:
@@ -110,7 +110,7 @@ class ColorBoxMain:
                         tm4.start()
                     HOME.setProperty('Daemon_EIGHT_ImageUpdating', '1')
             self.manual_set_NINE = HOME.getProperty("NINE_manual_set")
-            if self.manual_set_NINE != '' and self.manual_set_NINE != self.prefix_prev_NINE or HOME.getProperty("NINE_daemon_fire"):
+            if (self.manual_set_NINE != '' and self.manual_set_NINE != self.prefix_prev_NINE) or HOME.getProperty("NINE_daemon_fire"):
                 HOME.setProperty('Daemon_NINE_ImageUpdating', '0')
                 try:
                     HOME.clearProperty("NINE_daemon_fire")
