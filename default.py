@@ -49,8 +49,9 @@ class ColorBoxMain:
             if not FIVE_daemon_set == '':
                 self.image_now_FIVE = xbmc.getInfoLabel("Control.GetLabel(7975)")
                 if (self.image_now_FIVE != self.image_prev_FIVE and self.image_now_FIVE != "") or HOME.getProperty("FIVE_daemon_fire"):
-                    HOME.setProperty('Daemon_FIVE_ImageUpdating', '0')
+                    HOME.setProperty('Daemon_FIVE_ImageUpdating', self.image_now_FIVE)
                     HOME.clearProperty("FIVE_daemon_fire")
+                    #HOME.clearProperty("ImageFilterFIVE")
                     try:
                         HOME.setProperty('ImageFilterFIVE', Utils.ColorBox_go_map(self.image_now_FIVE, FIVE_daemon_set))
                     except Exception as e:
@@ -68,8 +69,9 @@ class ColorBoxMain:
             if not cfa_daemon_set == '':
                 self.image_now_cfa = xbmc.getInfoLabel("ListItem.Art(fanart)")
                 if (self.image_now_cfa != self.image_prev_cfa and self.image_now_cfa != "") or HOME.getProperty("cfa_daemon_fire"):
-                    HOME.setProperty('Daemon_cfa_ImageUpdating', '0')
+                    HOME.setProperty('Daemon_cfa_ImageUpdating', self.image_now_cfa)
                     HOME.clearProperty("cfa_daemon_fire")
+                    #HOME.clearProperty("ImageFiltercfa")
                     try:
                         HOME.setProperty('ImageFiltercfa', Utils.ColorBox_go_map(self.image_now_cfa, cfa_daemon_set))
                     except Exception as e:
@@ -95,8 +97,9 @@ class ColorBoxMain:
             if not HOME.getProperty("EIGHT_daemon_set") == '':
                 self.image_now_EIGHT = xbmc.getInfoLabel("Control.GetLabel(7978)")
                 if (self.image_now_EIGHT != self.image_prev_EIGHT and self.image_now_EIGHT != "") or HOME.getProperty("EIGHT_daemon_fire"):
-                    HOME.setProperty('Daemon_EIGHT_ImageUpdating', '0')
+                    HOME.setProperty('Daemon_EIGHT_ImageUpdating', self.image_now_EIGHT)
                     HOME.clearProperty("EIGHT_daemon_fire")
+                    #HOME.clearProperty("ImageFilterEIGHT")
                     try:
                         HOME.setProperty('ImageFilterEIGHT', Utils.ColorBox_go_map(self.image_now_EIGHT, EIGHT_daemon_set))
                     except Exception as e:
@@ -111,7 +114,7 @@ class ColorBoxMain:
                     HOME.setProperty('Daemon_EIGHT_ImageUpdating', '1')
             self.manual_set_NINE = HOME.getProperty("NINE_manual_set")
             if (self.manual_set_NINE != '' and self.manual_set_NINE != self.prefix_prev_NINE) or HOME.getProperty("NINE_daemon_fire"):
-                HOME.setProperty('Daemon_NINE_ImageUpdating', '0')
+                HOME.setProperty('Daemon_NINE_ImageUpdating', self.manual_set_NINE)
                 try:
                     HOME.clearProperty("NINE_daemon_fire")
                     self.prefix_prev_NINE = self.manual_set_NINE
@@ -122,7 +125,7 @@ class ColorBoxMain:
                     self.prefix = ""
                     for larg in self.manual_set_NINE.strip().split('|'):
                         for arg in larg.strip().split(','):
-                            arg = arg.replace("'\"", "").replace("\"'", "")
+                            arg = arg.replace("'", "").replace('"', "")
                             if arg.startswith('info='):
                                 self.info = Utils.Remove_Quotes(arg[5:])
                             elif arg.startswith('id='):
@@ -143,9 +146,9 @@ class ColorBoxMain:
                             HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
                         elif self.var != "":
                             ColorBox_settings_map[self.var](self.set)
-                        HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
                 except Exception as e:
                     Utils.log("9err: %s img: %s" % (e,self.manual_set_NINE))
+                HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
             if self.ColorBox_multis != []:
                 for line in self.ColorBox_multis:
                     self.idm, self.wpnam, self.mfx, self.mqual = line.strip().split(':')
@@ -206,7 +209,7 @@ class ColorBoxMain:
         self.infos = []
         self.ColorBox_multis = []
         for arg in args:
-            arg = arg.replace("'\"", "").replace("\"'", "")
+            arg = arg.replace("'", "").replace('"', "")
             if arg == 'script.colorbox':
                 continue
             elif arg.startswith('multis='):
@@ -227,7 +230,7 @@ if __name__ == "__main__":
     varm =		120
     prefixm	=	""
     for arg in args:
-        arg = arg.replace("'\"", "").replace("\"'", "")
+        arg = arg.replace("'", "").replace('"', "")
         if arg == 'script.colorbox':
             continue
         elif arg.startswith('daemon='):

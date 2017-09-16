@@ -87,7 +87,6 @@ def fndesaturate(): return str(desat) + str(quality)
 def fnsharpness(): return str(sharp) + str(quality)
 def fnsplicer(): return str(min_stripes) + str(max_stripes) + str(orientation) + str(quality)
 def ColorBox_go_map(filterimage, imageops, gqual=0):
-    if not filterimage: return
     if gqual == 0: gqual = quality
     filename = hashlib.md5(filterimage).hexdigest() + str(blend) + '-'
     for cmarg in imageops.strip().split('-'):
@@ -698,7 +697,6 @@ def Show_Percentage():
     except:
         return
 def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='ffffffff'):
-    if not filterimage: return
     md5 = hashlib.md5(filterimage).hexdigest()
     var3 = 'Old' + cname
     var4 = 'Old' + ccname
@@ -729,7 +727,6 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
     #linear_gradient(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 10, var4)
     return imagecolor, cimagecolor
 def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ffffffff'):
-    if not filterimage: return
     md5 = hashlib.md5(filterimage).hexdigest()
     if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:
