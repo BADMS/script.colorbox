@@ -63,7 +63,7 @@ class ColorBoxMain:
                         HOME.setProperty('ImageFIVE', self.image_now_FIVE)
                         tm1 = Thread(target=Utils.Color_Only, args=(self.image_now_FIVE, "ImageColorFIVE", "ImageCColorFIVE"))
                         tm1.start()
-                    HOME.setProperty('Daemon_FIVE_ImageUpdating', '1')
+                    HOME.setProperty('Daemon_FIVE_ImageUpdating', '')
             cfa_daemon_set = HOME.getProperty("cfa_daemon_set")
             #curr_window = xbmc.getInfoLabel("Window.Property(xmlfile)")
             if not cfa_daemon_set == '':
@@ -82,7 +82,7 @@ class ColorBoxMain:
                         HOME.setProperty("OldImageCColorcfa", HOME.getProperty("ImageCColorcfa"))
                         tf = Thread(target=Utils.Color_Only, args=(self.image_now_cfa, "ImageColorcfa", "ImageCColorcfa"))
                         tf.start()
-                    HOME.setProperty('Daemon_cfa_ImageUpdating', '1')
+                    HOME.setProperty('Daemon_cfa_ImageUpdating', '')
             SEVEN_daemon_set = HOME.getProperty("SEVEN_daemon_set")
             if not SEVEN_daemon_set == '':
                 self.image_now_SEVEN = xbmc.getInfoLabel("Control.GetLabel(7977)")
@@ -113,7 +113,7 @@ class ColorBoxMain:
                         HOME.setProperty('ImageEIGHT', self.image_now_EIGHT)
                         tm4 = Thread(target=Utils.Color_Only, args=(self.image_now_EIGHT, "ImageColorEIGHT", "ImageCColorEIGHT"))
                         tm4.start()
-                    HOME.setProperty('Daemon_EIGHT_ImageUpdating', '1')
+                    HOME.setProperty('Daemon_EIGHT_ImageUpdating', '')
             self.manual_set_NINE = HOME.getProperty("NINE_manual_set")
             if (self.manual_set_NINE != '' and self.manual_set_NINE != self.prefix_prev_NINE) or HOME.getProperty("NINE_daemon_fire"):
                 HOME.setProperty('Daemon_NINE_ImageUpdating', self.manual_set_NINE)
@@ -150,7 +150,7 @@ class ColorBoxMain:
                             ColorBox_settings_map[self.var](self.set)
                 except Exception as e:
                     Utils.log("9err: %s img: %s" % (e,self.manual_set_NINE))
-                HOME.setProperty('Daemon_NINE_ImageUpdating', '1')
+                HOME.setProperty('Daemon_NINE_ImageUpdating', '')
             if self.ColorBox_multis != []:
                 for line in self.ColorBox_multis:
                     self.idm, self.wpnam, self.mfx, self.mqual = line.strip().split(':')
