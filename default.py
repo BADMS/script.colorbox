@@ -1,9 +1,8 @@
-import os, sys
+import os, sys, re
 import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcvfs
-import re
 from threading import Thread
 ADDON =             xbmcaddon.Addon()
 ADDON_VERSION =     ADDON.getAddonInfo('version')
