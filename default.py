@@ -41,9 +41,18 @@ class ColorBoxMain:
         monitor = xbmc.Monitor()
         while self.daemon and not monitor.abortRequested():
             Utils.Show_Percentage()
-            HOME.setProperty('LabelFilterTWO', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7972)")).strip()))
-            HOME.setProperty('LabelFilterTHREE', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7973)")).strip()))
-            HOME.setProperty('LabelFilterFOUR', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, xbmc.getInfoLabel("Control.GetLabel(7974)")).strip()))
+            self.label_now_TWO = xbmc.getInfoLabel("Control.GetLabel(7972)")
+            if (self.label_now_TWO != self.label_prev_TWO):
+                self.label_prev_TWO = self.label_now_TWO
+                HOME.setProperty('LabelFilterTWO', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, self.label_now_TWO).strip()))
+            self.label_now_THREE = xbmc.getInfoLabel("Control.GetLabel(7973)")
+            if (self.label_now_THREE != self.label_prev_THREE):
+                self.label_prev_THREE = self.label_now_THREE
+                HOME.setProperty('LabelFilterTHREE', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, self.label_now_THREE).strip()))
+            self.label_now_FOUR = xbmc.getInfoLabel("Control.GetLabel(7974)")
+            if (self.label_now_FOUR != self.label_prev_FOUR):
+                self.label_prev_FOUR = self.label_now_FOUR
+                HOME.setProperty('LabelFilterFOUR', re.sub('\s+',' ',reduce(lambda CBX_a, CBX_kv: CBX_a.replace(*CBX_kv), ColorBox_strip, self.label_now_FOUR).strip()))
             FIVE_daemon_set = HOME.getProperty("FIVE_daemon_set")
             if not FIVE_daemon_set == '':
                 self.image_now_FIVE = xbmc.getInfoLabel("Control.GetLabel(7975)")
@@ -192,11 +201,17 @@ class ColorBoxMain:
         self.prefix =           ""
         self.daemon =           False
         self.show_watched =     ""
+        self.label_now_TWO =    ""
+        self.label_now_THREE =  ""
+        self.label_now_FOUR =   ""
         self.image_now_FIVE =   ""
         self.image_now_cfa =    ""
         self.image_now_SEVEN =  ""
         self.image_now_EIGHT =  ""
         self.image_now_NINE =   ""
+        self.label_prev_TWO =   ""
+        self.label_prev_THREE = ""
+        self.label_prev_FOUR =  ""
         self.image_prev_FIVE =  ""
         self.image_prev_cfa =   ""
         self.image_prev_SEVEN = ""
