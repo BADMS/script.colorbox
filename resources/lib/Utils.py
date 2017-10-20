@@ -366,7 +366,6 @@ def Dither_Image(img):
             dipixels[i + 1, j]     = (r[2], g[2], b[2])
             dipixels[i + 1, j + 1] = (r[3], g[3], b[3])
     return dinew
-
 def Splice_Images(images, min_stripes=20, max_stripes=200, orientation="verticle", random_coords=False):
     max_area = 0
     no_of_stripes = random.randint(min_stripes, max_stripes)
@@ -379,14 +378,12 @@ def Splice_Images(images, min_stripes=20, max_stripes=200, orientation="verticle
             max_width, max_height = w, h
     max_width = max_width - (max_width % no_of_stripes)
     max_height = max_height - (max_height % no_of_stripes)
-
     output_image = Image.new('RGB', (max_width, max_height))
     # Resize all to the largest dimensions
     resized_images = []
     for image in images:
         resized_image = image.resize((max_width, max_height), 3)
         resized_images.append(resized_image)
-
     coords_list = []
     if orientation == "verticle":
         split = range(0, int(w), int(int(w) / int(no_of_stripes)))
@@ -398,7 +395,6 @@ def Splice_Images(images, min_stripes=20, max_stripes=200, orientation="verticle
         for coord in split:
             stripe_coords = (0, coord, w, int(coord + h / no_of_stripes))
             coords_list.append(stripe_coords)
-
     for coords in coords_list:
         if random_coords:
             source_coords = coords_list[random.randint(0, len(coords_list) - 1)]
@@ -407,8 +403,6 @@ def Splice_Images(images, min_stripes=20, max_stripes=200, orientation="verticle
         stripe = resized_images[random.randint(0, len(resized_images) - 1)].crop(source_coords)
         output_image.paste(stripe, coords)
     return output_image
-
-
 def get_all_images_from_the_input_dir(input_dir):
     images = []
     for file in os.listdir(input_dir):
@@ -418,7 +412,6 @@ def get_all_images_from_the_input_dir(input_dir):
                 img = Image.open(filepath)
                 images.append(img)
     return images
-
 def anglegcr(img, percentage):
     cmyk_im = img.convert('CMYK')
     if not percentage:
