@@ -135,7 +135,7 @@ class ColorBoxMain:
                     self.prefix = ""
                     for larg in self.manual_set_NINE.strip().split('|'):
                         for arg in larg.strip().split(','):
-                            arg = arg.replace("'", "").replace('"', "")
+                            arg = arg.replace('"', "")
                             if arg.startswith('info='):
                                 self.info = Utils.Remove_Quotes(arg[5:])
                             elif arg.startswith('id='):
@@ -225,7 +225,7 @@ class ColorBoxMain:
         self.infos = []
         self.ColorBox_multis = []
         for arg in args:
-            arg = arg.replace("'", "").replace('"', "")
+            arg = arg.replace('"', "")
             if arg == 'script.colorbox':
                 continue
             elif arg.startswith('multis='):
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     varm =		120
     prefixm	=	""
     for arg in args:
-        arg = arg.replace("'", "").replace('"', "")
+        arg = arg.replace('"', "")
         if arg == 'script.colorbox':
             continue
         elif arg.startswith('daemon='):
