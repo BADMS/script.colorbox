@@ -175,7 +175,7 @@ def set_sharp(new_value):
     xbmc.executebuiltin('Skin.SetString(colorbox_sharp,'+str(new_value)+')')
 def set_blend(new_value):
     global blend
-    blend = float(new_value) / 100.0
+    blend = float(new_value) / 1.0
     xbmc.executebuiltin('Skin.SetString(colorbox_blend,'+str(new_value)+')')
 def dataglitch(img):
     return Dataglitch_Image(img)
