@@ -10,6 +10,10 @@ try:
     from urllib import unquote
 except:
     from urllib.parse import unquote
+try:
+    translatePath = xbmcvfs.translatePath
+except:
+    translatePath = xbmc.translatePath
 import random
 import math
 from PIL import Image, ImageOps, ImageEnhance, ImageDraw, ImageStat, ImageFilter
@@ -22,7 +26,7 @@ from collections import deque
 ADDON =             xbmcaddon.Addon()
 ADDON_ID =          ADDON.getAddonInfo('id')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
-ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
+ADDON_DATA_PATH =   os.path.join(translatePath("special://profile/addon_data/%s" % ADDON_ID))
 ADDON_COLORS =      os.path.join(ADDON_DATA_PATH, "colors.db")
 #ADDON_SETTINGS =    os.path.join(ADDON_DATA_PATH, "settings.")
 image_formats =     ['.jpg', '.jpeg', '.png', '.tif', '.bmp', 'gif', 'tiff']
@@ -907,11 +911,11 @@ def Check_XBMC_Internal(targetfile, filterimage):
     xbmc_cache_filep = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
     xbmc_cache_filej = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".png")
     if xbmcvfs.exists(xbmc_cache_filej):
-        return xbmc.translatePath(xbmc_cache_filej)
+        return translatePath(xbmc_cache_filej)
     elif xbmcvfs.exists(xbmc_cache_filep):
-        return xbmc.translatePath(xbmc_cache_filep)
+        return translatePath(xbmc_cache_filep)
     elif xbmcvfs.exists(xbmc_vid_cache_file):
-        return xbmc.translatePath(xbmc_vid_cache_file)
+        return translatePath(xbmc_vid_cache_file)
     else:
         filterimage = unquote(filterimage.replace("image://", ""))
         if filterimage.endswith("/"):
@@ -925,11 +929,11 @@ def Check_XBMC_Cache(targetfile):
     xbmc_cache_filep = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
     xbmc_cache_filej = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".png")
     if xbmcvfs.exists(xbmc_cache_filej):
-        return xbmc.translatePath(xbmc_cache_filej)
+        return translatePath(xbmc_cache_filej)
     elif xbmcvfs.exists(xbmc_cache_filep):
-        return xbmc.translatePath(xbmc_cache_filep)
+        return translatePath(xbmc_cache_filep)
     elif xbmcvfs.exists(xbmc_vid_cache_file):
-        return xbmc.translatePath(xbmc_vid_cache_file)
+        return translatePath(xbmc_vid_cache_file)
     if xbmcvfs.exists(targetfile):
         return targetfile
     return ""

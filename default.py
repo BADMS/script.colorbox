@@ -6,14 +6,16 @@ import xbmcaddon
 import xbmcvfs
 from threading import Thread
 from functools import reduce
+
+from resources.lib import Utils
 ADDON =             xbmcaddon.Addon()
 ADDON_VERSION =     ADDON.getAddonInfo('version')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
 ADDON_PATH =        ADDON.getAddonInfo('path').decode("utf-8")
 ADDON_ID =          ADDON.getAddonInfo('id')
-ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
+ADDON_DATA_PATH =   os.path.join(Utils.translatePath("special://profile/addon_data/%s" % ADDON_ID))
 HOME =              xbmcgui.Window(10000)
-from resources.lib import Utils
+
 ColorBox_settings_map = {
         'pixelsize':    Utils.set_pixelsize,
         'bitsize':      Utils.set_bitsize,
