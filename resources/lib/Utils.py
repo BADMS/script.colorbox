@@ -261,7 +261,7 @@ def Dataglitch_Image(img, channel='r'):
 def Shiftblock_Image(image, blocksize=64, sigma=1.05, iterations=300):
     seed = random.random()
     r = random.Random(seed)
-    for i in xrange(iterations):
+    for i in range(iterations):
         bx = int(r.uniform(0, image.size[0]-blocksize))
         by = int(r.uniform(0, image.size[1]-blocksize))
         block = image.crop((bx, by, bx+blocksize-1, by+blocksize-1))
@@ -425,12 +425,12 @@ def anglegcr(img, percentage):
         return cmyk_im
     cmyk_im = cmyk_im.split()
     cmyk = []
-    for i in xrange(4):
+    for i in range(4):
         cmyk.append(cmyk_im[i].load())
-    for x in xrange(img.size[0]):
-        for y in xrange(img.size[1]):
+    for x in range(img.size[0]):
+        for y in range(img.size[1]):
             gray = min(cmyk[0][x,y], cmyk[1][x,y], cmyk[2][x,y]) * percentage / 100
-            for i in xrange(3):
+            for i in range(3):
                 cmyk[i][x,y] = cmyk[i][x,y] - gray
             cmyk[3][x,y] = gray
     return Image.merge('CMYK', cmyk_im)
@@ -442,8 +442,8 @@ def anglehalftone(img, cmyk, sample, scale, angles):
         size = channel.size[0]*scale, channel.size[1]*scale
         half_tone = Image.new('L', size)
         draw = ImageDraw.Draw(half_tone)
-        for x in xrange(0, channel.size[0], sample):
-            for y in xrange(0, channel.size[1], sample):
+        for x in range(0, channel.size[0], sample):
+            for y in range(0, channel.size[1], sample):
                 box = channel.crop((x, y, x + sample, y + sample))
                 stat = ImageStat.Stat(box)
                 diameter = (stat.mean[0] / 255)**0.5
@@ -632,8 +632,8 @@ def image_posterize(img, bits=1):
     return ImageOps.posterize(img, bits)
 def fake_light(img, tilesize=50):
     WIDTH, HEIGHT = img.size
-    for x in xrange(0, WIDTH, tilesize):
-        for y in xrange(0, HEIGHT, tilesize):
+    for x in range(0, WIDTH, tilesize):
+        for y in range(0, HEIGHT, tilesize):
             br = int(255 * (1 - x / float(WIDTH) * y / float(HEIGHT)))
             tile = Image.new('RGB', (tilesize, tilesize), (255,255,255,128))
             img.paste((br,br,br), (x, y, x + tilesize, y + tilesize), mask=tile)
