@@ -16,7 +16,8 @@ except:
     translatePath = xbmc.translatePath
 import random
 import math
-from PIL import Image, ImageOps, ImageEnhance, ImageDraw, ImageStat, ImageFilter
+from PIL import Image, ImageOps, ImageEnhance, ImageDraw, ImageStat, ImageFilter, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 from resources.lib.ImageOperations import MyGaussianBlur
 from decimal import *
 from xml.dom.minidom import parse
