@@ -196,7 +196,7 @@ def pixelate(img):
 def splicer(images_path):
     images_path = xbmc.getInfoLabel('ListItem.Path')
     images = get_all_images_from_the_input_dir(images_path)
-    return Splice_Images(images, MIN_STRIPES, MAX_STRIPES, orientation=ORIENTATION)
+    return Splice_Images(images, min_stripes, max_stripes, orientation=orientation)
 def shiftblock(img):
     qiterations = iterations / quality    
     return Shiftblock_Image(img, blocksize, sigma, qiterations)
