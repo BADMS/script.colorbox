@@ -102,7 +102,7 @@ def ColorBox_go_map(filterimage, imageops, gqual=0):
     Cache = Check_XBMC_Cache(targetfile)
     if Cache != "": return Cache
     Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return
+    if not Img or not os.path.exists(Img): return
     try:
         img = Image.open(Img)
     except Exception as e:
@@ -705,7 +705,7 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
         filename = md5 + ".png"
         targetfile = os.path.join(ADDON_DATA_PATH, filename)
         Img = Check_XBMC_Internal(targetfile, filterimage)
-        if not Img: return
+        if not Img or not os.path.exists(Img): return
         try:
             img = Image.open(Img)
         except Exception as e:
