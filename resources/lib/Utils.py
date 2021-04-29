@@ -4,13 +4,16 @@ import xbmcgui
 import xbmcvfs
 import xbmcplugin
 import os, sys
-import simplejson
+import json
 import hashlib
-import urllib
+try:
+    from urllib import unquote
+except:
+    from urllib.parse import unquote
 import random
 import math
 from PIL import Image, ImageOps, ImageEnhance, ImageDraw, ImageStat, ImageFilter
-from ImageOperations import MyGaussianBlur
+from resources.lib.ImageOperations import MyGaussianBlur
 from decimal import *
 from xml.dom.minidom import parse
 from threading import Thread
@@ -910,7 +913,7 @@ def Check_XBMC_Internal(targetfile, filterimage):
     elif xbmcvfs.exists(xbmc_vid_cache_file):
         return xbmc.translatePath(xbmc_vid_cache_file)
     else:
-        filterimage = urllib.unquote(filterimage.replace("image://", "")).decode('utf8')
+        filterimage = unquote(filterimage.replace("image://", ""))
         if filterimage.endswith("/"):
             filterimage = filterimage[:-1]
         xbmcvfs.copy(filterimage, targetfile)
@@ -970,7 +973,7 @@ def log(txt):
     message = u'%s: %s' % (ADDON_ID, txt)
     xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGNOTICE)
 def prettyprint(string):
-    log(simplejson.dumps(string, sort_keys=True, indent=4, separators=(',', ': ')))
+    log(json.dumps(string, sort_keys=True, indent=4, separators=(',', ': ')))
 ColorBox_filename_map = {
         'blur':         fnblur,
         'pixelate':     fnpixelate,

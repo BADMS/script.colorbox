@@ -1,9 +1,11 @@
 import os, sys, re
 import xbmc
 import xbmcgui
+import xbmcplugin
 import xbmcaddon
 import xbmcvfs
 from threading import Thread
+from functools import reduce
 ADDON =             xbmcaddon.Addon()
 ADDON_VERSION =     ADDON.getAddonInfo('version')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
