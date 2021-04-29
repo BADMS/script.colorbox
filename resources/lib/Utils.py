@@ -121,7 +121,7 @@ def ColorBox_go_map(filterimage, imageops, gqual=0):
             orwidth, orheight = imgor.size
             width, height = img.size
             if width != orwidth or height != orheight:
-                img = img.resize((orwidth, orheight), Image.ANTIALIAS)
+                img = img.resize((int(orwidth), int(orheight)), Image.ANTIALIAS)
             img = Image.blend(imgor, img, blend)
         img.save(targetfile)
         return targetfile
@@ -898,7 +898,7 @@ def Get_Colors(img, md5):
             values = []
             for pixel in pixels:
                 values.append(pixel)
-            colour_tuple[channel] = clamp(sum(values) / len(values))
+            colour_tuple[channel] = int(clamp(sum(values) / len(values)))
         imagecolor = 'ff%02x%02x%02x' % tuple(colour_tuple)
         cimagecolor = Complementary_Color(imagecolor)
         Write_Colors_Dict(md5,imagecolor,cimagecolor)
@@ -953,7 +953,7 @@ def Resize_Image(img, scale):
         qwidth += 1
     if qheight % 2 != 0:
         qheight += 1
-    return img.resize((qwidth, qheight), Image.ANTIALIAS)
+    return img.resize((int(qwidth), int(qheight)), Image.ANTIALIAS)
 def clamp(x):
     return max(0, min(x, 255))
 def Load_Colors_Dict():
