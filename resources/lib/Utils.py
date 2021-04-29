@@ -972,10 +972,8 @@ def Write_Colors_Dict(md5,imagecolor,cimagecolor):
         for id, values in colors_dict.items():
             file.write(':'.join([id] + values.split(':')) + '\n')
 def log(txt):
-    if isinstance(txt, str):
-        txt = txt.decode("utf-8")
     message = u'%s: %s' % (ADDON_ID, txt)
-    xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGNOTICE)
+    xbmc.log(msg=message, level=xbmc.LOGINFO)
 def prettyprint(string):
     log(json.dumps(string, sort_keys=True, indent=4, separators=(',', ': ')))
 ColorBox_filename_map = {
