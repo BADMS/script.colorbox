@@ -95,7 +95,7 @@ def fnsharpness(): return str(sharp) + str(quality)
 def fnsplicer(): return str(min_stripes) + str(max_stripes) + str(orientation) + str(quality)
 def ColorBox_go_map(filterimage, imageops, gqual=0):
     if gqual == 0: gqual = quality
-    filename = hashlib.md5(filterimage).hexdigest() + str(blend) + '-'
+    filename = hashlib.md5(filterimage.encode('utf-8')).hexdigest() + str(blend) + '-'
     for cmarg in imageops.strip().split('-'):
         filename = filename + cmarg + ColorBox_filename_map[cmarg]()
     targetfile = os.path.join(ADDON_DATA_PATH, filename + '.png')
@@ -697,7 +697,7 @@ def Show_Percentage():
     except:
         return
 def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='ffffffff'):
-    md5 = hashlib.md5(filterimage).hexdigest()
+    md5 = hashlib.md5(filterimage.encode('utf-8')).hexdigest()
     var3 = 'Old' + cname
     var4 = 'Old' + ccname
     if not colors_dict: Load_Colors_Dict()
