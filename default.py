@@ -3,44 +3,45 @@ import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcvfs
+from functools import reduce
 from threading import Thread
 ADDON =             xbmcaddon.Addon()
 ADDON_VERSION =     ADDON.getAddonInfo('version')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
-ADDON_PATH =        ADDON.getAddonInfo('path').decode("utf-8")
+ADDON_PATH =        ADDON.getAddonInfo('path')
 ADDON_ID =          ADDON.getAddonInfo('id')
-ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
+ADDON_DATA_PATH =   os.path.join(xbmcvfs.translatePath("special://profile/addon_data/%s" % ADDON_ID))
 HOME =              xbmcgui.Window(10000)
-from resources.lib import Utils
+from resources.lib import utils
 ColorBox_settings_map = {
-        'pixelsize':    Utils.set_pixelsize,
-        'bitsize':      Utils.set_bitsize,
-        'blursize':     Utils.set_blursize,
-        'black':        Utils.set_black,
-        'white':        Utils.set_white,
-        'lgint':        Utils.set_lgint,
-        'lgsteps':      Utils.set_lgsteps,
-        'comp':         Utils.set_comp,
-        'main':         Utils.set_main,
-        'desat':        Utils.set_desat,
-        'sharp':        Utils.set_sharp,
-        'blend':        Utils.set_blend,
-        'quality':      Utils.set_quality}
+        'pixelsize':    utils.set_pixelsize,
+        'bitsize':      utils.set_bitsize,
+        'blursize':     utils.set_blursize,
+        'black':        utils.set_black,
+        'white':        utils.set_white,
+        'lgint':        utils.set_lgint,
+        'lgsteps':      utils.set_lgsteps,
+        'comp':         utils.set_comp,
+        'main':         utils.set_main,
+        'desat':        utils.set_desat,
+        'sharp':        utils.set_sharp,
+        'blend':        utils.set_blend,
+        'quality':      utils.set_quality}
 ColorBox_strip =        ('[CR]', ' '), ('<BR>', ' '), ('<br>', ' '), ('&#10;', ' '), ('&&#10;', ' ')
 #ColorBox_strip =       ('[B]', ''), ('[/B]', ''), ('[CR]', ' ')
 class ColorBoxMain:
     def __init__(self):
-        Utils.log("version %s started" % ADDON_VERSION)
+        utils.log("version %s started" % ADDON_VERSION)
         self._init_vars()
         self._parse_argv()
         if not xbmcvfs.exists(ADDON_DATA_PATH):
             xbmcvfs.mkdir(ADDON_DATA_PATH)
         if self.control == "plugin":
             xbmcplugin.endOfDirectory(self.handle)
-        Utils.Load_Colors_Dict()
+        utils.Load_Colors_Dict()
         monitor = xbmc.Monitor()
         while self.daemon and not monitor.abortRequested():
-            Utils.Show_Percentage()
+            utils.Show_Percentage()
             self.label_now_TWO = xbmc.getInfoLabel("Control.GetLabel(7972)")
             if (self.label_now_TWO != self.label_prev_TWO):
                 self.label_prev_TWO = self.label_now_TWO
@@ -61,15 +62,15 @@ class ColorBoxMain:
                     HOME.clearProperty("FIVE_daemon_fire")
                     #HOME.clearProperty("ImageFilterFIVE")
                     try:
-                        HOME.setProperty('ImageFilterFIVE', Utils.ColorBox_go_map(self.image_now_FIVE, FIVE_daemon_set))
+                        HOME.setProperty('ImageFilterFIVE', utils.ColorBox_go_map(self.image_now_FIVE, FIVE_daemon_set))
                     except Exception as e:
-                        Utils.log("5err: %s img: %s" % (e,self.image_now_FIVE))
+                        utils.log("5err: %s img: %s" % (e,self.image_now_FIVE))
                     else:
                         self.image_prev_FIVE = self.image_now_FIVE
                         HOME.setProperty("OldImageColorFIVE", HOME.getProperty("ImageColorFIVE"))
                         HOME.setProperty("OldImageCColorFIVE", HOME.getProperty("ImageCColorFIVE"))
                         HOME.setProperty('ImageFIVE', self.image_now_FIVE)
-                        tm1 = Thread(target=Utils.Color_Only, args=(self.image_now_FIVE, "ImageColorFIVE", "ImageCColorFIVE"))
+                        tm1 = Thread(target=utils.Color_Only, args=(self.image_now_FIVE, "ImageColorFIVE", "ImageCColorFIVE"))
                         tm1.start()
                     HOME.setProperty('Daemon_FIVE_ImageUpdating', '')
             cfa_daemon_set = HOME.getProperty("cfa_daemon_set")
@@ -81,14 +82,14 @@ class ColorBoxMain:
                     HOME.clearProperty("cfa_daemon_fire")
                     #HOME.clearProperty("ImageFiltercfa")
                     try:
-                        HOME.setProperty('ImageFiltercfa', Utils.ColorBox_go_map(self.image_now_cfa, cfa_daemon_set))
+                        HOME.setProperty('ImageFiltercfa', utils.ColorBox_go_map(self.image_now_cfa, cfa_daemon_set))
                     except Exception as e:
-                        Utils.log("cerr: %s img: %s" % (e,self.image_now_cfa))
+                        utils.log("cerr: %s img: %s" % (e,self.image_now_cfa))
                     else:
                         self.image_prev_cfa = self.image_now_cfa
                         HOME.setProperty("OldImageColorcfa", HOME.getProperty("ImageColorcfa"))
                         HOME.setProperty("OldImageCColorcfa", HOME.getProperty("ImageCColorcfa"))
-                        tf = Thread(target=Utils.Color_Only, args=(self.image_now_cfa, "ImageColorcfa", "ImageCColorcfa"))
+                        tf = Thread(target=utils.Color_Only, args=(self.image_now_cfa, "ImageColorcfa", "ImageCColorcfa"))
                         tf.start()
                     HOME.setProperty('Daemon_cfa_ImageUpdating', '')
             SEVEN_daemon_set = HOME.getProperty("SEVEN_daemon_set")
@@ -99,10 +100,10 @@ class ColorBoxMain:
                         self.image_prev_SEVEN = self.image_now_SEVEN
                         HOME.setProperty("OldImageColorSEVEN", HOME.getProperty("ImageColorSEVEN"))
                         HOME.setProperty("OldImageCColorSEVEN", HOME.getProperty("ImageCColorSEVEN"))
-                        tm3 = Thread(target=Utils.Color_Only, args=(self.image_now_SEVEN, "ImageColorSEVEN", "ImageCColorSEVEN"))
+                        tm3 = Thread(target=utils.Color_Only, args=(self.image_now_SEVEN, "ImageColorSEVEN", "ImageCColorSEVEN"))
                         tm3.start()
                     except Exception as e:
-                        Utils.log("7err: %s img: %s" % (e,self.image_now_SEVEN))
+                        utils.log("7err: %s img: %s" % (e,self.image_now_SEVEN))
             EIGHT_daemon_set = HOME.getProperty("EIGHT_daemon_set")
             if not EIGHT_daemon_set == '':
                 self.image_now_EIGHT = xbmc.getInfoLabel("Control.GetLabel(7978)")
@@ -111,15 +112,15 @@ class ColorBoxMain:
                     HOME.clearProperty("EIGHT_daemon_fire")
                     #HOME.clearProperty("ImageFilterEIGHT")
                     try:
-                        HOME.setProperty('ImageFilterEIGHT', Utils.ColorBox_go_map(self.image_now_EIGHT, EIGHT_daemon_set))
+                        HOME.setProperty('ImageFilterEIGHT', utils.ColorBox_go_map(self.image_now_EIGHT, EIGHT_daemon_set))
                     except Exception as e:
-                        Utils.log("8err: %s img: %s" % (e,self.image_now_EIGHT))
+                        utils.log("8err: %s img: %s" % (e,self.image_now_EIGHT))
                     else:
                         self.image_prev_EIGHT = self.image_now_EIGHT
                         HOME.setProperty("OldImageColorEIGHT", HOME.getProperty("ImageColorEIGHT"))
                         HOME.setProperty("OldImageCColorEIGHT", HOME.getProperty("ImageCColorEIGHT"))
                         HOME.setProperty('ImageEIGHT', self.image_now_EIGHT)
-                        tm4 = Thread(target=Utils.Color_Only, args=(self.image_now_EIGHT, "ImageColorEIGHT", "ImageCColorEIGHT"))
+                        tm4 = Thread(target=utils.Color_Only, args=(self.image_now_EIGHT, "ImageColorEIGHT", "ImageCColorEIGHT"))
                         tm4.start()
                     HOME.setProperty('Daemon_EIGHT_ImageUpdating', '')
             self.manual_set_NINE = HOME.getProperty("NINE_manual_set")
@@ -137,40 +138,40 @@ class ColorBoxMain:
                         for arg in larg.strip().split(','):
                             arg = arg.replace('"', "")
                             if arg.startswith('info='):
-                                self.info = Utils.Remove_Quotes(arg[5:])
+                                self.info = utils.Remove_Quotes(arg[5:])
                             elif arg.startswith('id='):
-                                self.id = Utils.Remove_Quotes(arg[3:])
+                                self.id = utils.Remove_Quotes(arg[3:])
                             elif arg.startswith('set='):
-                                self.set = Utils.Remove_Quotes(arg[4:])
+                                self.set = utils.Remove_Quotes(arg[4:])
                             elif arg.startswith('var='):
-                                self.var = Utils.Remove_Quotes(arg[4:])
+                                self.var = utils.Remove_Quotes(arg[4:])
                             elif arg.startswith('prefix='):
                                 self.prefix = arg[7:]
                                 if not self.prefix.endswith("."):
                                     self.prefix = self.prefix + "."
                         if self.info != "":
-                            HOME.setProperty(self.prefix + 'ImageFilterNINE', Utils.ColorBox_go_map(self.id, self.info))
+                            HOME.setProperty(self.prefix + 'ImageFilterNINE', utils.ColorBox_go_map(self.id, self.info))
                             HOME.setProperty(self.prefix + "ImageNINE", self.id)
-                            imagecolor, cimagecolor = Utils.Color_Only_Manual(self.id, self.prefix + "ImageColorNINE")
+                            imagecolor, cimagecolor = utils.Color_Only_Manual(self.id, self.prefix + "ImageColorNINE")
                             HOME.setProperty(self.prefix + "ImageColorNINE", imagecolor)
                             HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
                         elif self.var != "":
                             ColorBox_settings_map[self.var](self.set)
                 except Exception as e:
-                    Utils.log("9err: %s img: %s" % (e,self.manual_set_NINE))
+                    utils.log("9err: %s img: %s" % (e,self.manual_set_NINE))
                 HOME.setProperty('Daemon_NINE_ImageUpdating', '')
             if self.ColorBox_multis != []:
                 for line in self.ColorBox_multis:
-                    self.idm, self.wpnam, self.mfx, self.mqual = line.strip().split(':')
+                    self.wpnam, self.mfx, self.mqual = line.strip().split(':')
                     self.image_now_MULTI = xbmc.getInfoLabel("Control.GetLabel(" + str(self.idm) + ")")
                     if self.image_now_MULTI != HOME.getProperty(self.wpnam) and self.image_now_MULTI != "":
                         try:
-                            HOME.setProperty(self.wpnam + "ImageFilter", Utils.ColorBox_go_map(self.image_now_MULTI, self.mfx, self.mqual))
+                            HOME.setProperty(self.wpnam + "ImageFilter", utils.ColorBox_go_map(self.image_now_MULTI, self.mfx, self.mqual))
                         except Exception as e:
-                            Utils.log("merr: %s img: %s" % (e,self.ColorBox_multis))
+                            utils.log("merr: %s img: %s" % (e,self.ColorBox_multis))
                         else:
                             HOME.setProperty(self.wpnam + "Image", self.image_now_MULTI)
-                            imagecolor, cimagecolor = Utils.Color_Only_Manual(self.image_now_MULTI, self.wpnam + "ImageColor")
+                            imagecolor, cimagecolor = utils.Color_Only_Manual(self.image_now_MULTI, self.wpnam + "ImageColor")
                             HOME.setProperty(self.wpnam + "ImageColor", imagecolor)
                             HOME.setProperty(self.wpnam + "ImageCColor", cimagecolor)
             monitor.waitForAbort(0.2)
@@ -229,11 +230,11 @@ class ColorBoxMain:
             if arg == 'script.colorbox':
                 continue
             elif arg.startswith('multis='):
-                self.multim = Utils.Remove_Quotes(arg[7:])
+                self.multim = utils.Remove_Quotes(arg[7:])
                 self.ColorBox_multis = self.multim.split("|")
             elif arg.startswith('daemon='):
                 self.daemon = True
-                Utils.log("daemon started")
+                utils.log("daemon started")
 class ColorBoxMonitor(xbmc.Monitor):
     def __init__(self, *args, **kwargs):
         xbmc.Monitor.__init__(self)
@@ -252,36 +253,36 @@ if __name__ == "__main__":
         elif arg.startswith('daemon='):
             ColorBoxMain()
         elif arg.startswith('info='):
-            infom = Utils.Remove_Quotes(arg[5:])
+            infom = utils.Remove_Quotes(arg[5:])
         elif arg.startswith('id='):
-            idm = Utils.Remove_Quotes(arg[3:])
+            idm = utils.Remove_Quotes(arg[3:])
         elif arg.startswith('var='):
-            varm = Utils.Remove_Quotes(arg[4:])
+            varm = utils.Remove_Quotes(arg[4:])
         elif arg.startswith('quality='):
-            ColorBox_settings_map['quality'](Utils.Remove_Quotes(arg[8:]))
+            ColorBox_settings_map['quality'](utils.Remove_Quotes(arg[8:]))
         elif arg.startswith('blursize='):
-            ColorBox_settings_map['blursize'](Utils.Remove_Quotes(arg[9:]))
+            ColorBox_settings_map['blursize'](utils.Remove_Quotes(arg[9:]))
         elif arg.startswith('pixelsize='):
-            ColorBox_settings_map['pixelsize'](Utils.Remove_Quotes(arg[10:]))
+            ColorBox_settings_map['pixelsize'](utils.Remove_Quotes(arg[10:]))
         elif arg.startswith('bitsize='):
-            ColorBox_settings_map['bitsize'](Utils.Remove_Quotes(arg[8:]))
+            ColorBox_settings_map['bitsize'](utils.Remove_Quotes(arg[8:]))
         elif arg.startswith('black='):
-            ColorBox_settings_map['black'](Utils.Remove_Quotes(arg[6:]))
+            ColorBox_settings_map['black'](utils.Remove_Quotes(arg[6:]))
         elif arg.startswith('white='):
-            ColorBox_settings_map['white'](Utils.Remove_Quotes(arg[6:]))
+            ColorBox_settings_map['white'](utils.Remove_Quotes(arg[6:]))
         elif arg.startswith('prefix='):
             prefixm = arg[7:]
             if not prefixm.endswith("."):
                 prefixm = prefixm + "."
     if infom == 'randomcolor':
-        HOME.setProperty(prefixm + "ImageColor", Utils.Random_Color())
-        HOME.setProperty(prefixm + "ImageCColor", Utils.Complementary_Color(HOME.getProperty(prefixm + "ImageColor")))
+        HOME.setProperty(prefixm + "ImageColor", utils.Random_Color())
+        HOME.setProperty(prefixm + "ImageCColor", utils.Complementary_Color(HOME.getProperty(prefixm + "ImageColor")))
     elif infom == 'shuffle' and idm != '':
-        us1 = Thread(target=Utils.Shuffle_Set, args=(idm,varm))
+        us1 = Thread(target=utils.Shuffle_Set, args=(idm,varm))
         us1.start()
     elif infom != "" and idm != "":
-        HOME.setProperty(prefixm + "ImageFilter", Utils.ColorBox_go_map(idm, infom))
+        HOME.setProperty(prefixm + "ImageFilter", utils.ColorBox_go_map(idm, infom))
         HOME.setProperty(prefixm + "Image", idm)
-        imagecolor, cimagecolor = Utils.Color_Only_Manual(idm, prefixm + "ImageColor")
+        imagecolor, cimagecolor = utils.Color_Only_Manual(idm, prefixm + "ImageColor")
         HOME.setProperty(prefixm + "ImageColor", imagecolor)
         HOME.setProperty(prefixm + "ImageCColor", cimagecolor)

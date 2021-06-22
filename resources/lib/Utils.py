@@ -3,25 +3,45 @@ import xbmcaddon
 import xbmcgui
 import xbmcvfs
 import xbmcplugin
-import os, sys
+import os, sys, time
 import simplejson
 import hashlib
-import urllib
+from urllib.parse import unquote
 import random
 import math
 from PIL import Image, ImageOps, ImageEnhance, ImageDraw, ImageStat, ImageFilter
-from ImageOperations import MyGaussianBlur
+from .imageoperations import MyGaussianBlur, NoiseUtils
 from decimal import *
-from xml.dom.minidom import parse
 from threading import Thread
-from random import shuffle
-from collections import deque
+from random import shuffle, randrange
+from collections import deque, namedtuple
+from .geometry import delaunay_triangulation, tri_centroid, Point, Triangle
+from .distributions import *
+from .randomart import *
 ADDON =             xbmcaddon.Addon()
 ADDON_ID =          ADDON.getAddonInfo('id')
 ADDON_LANGUAGE =    ADDON.getLocalizedString
-ADDON_DATA_PATH =   os.path.join(xbmc.translatePath("special://profile/addon_data/%s" % ADDON_ID))
+ADDON_DATA_PATH =   os.path.join(xbmcvfs.translatePath("special://profile/addon_data/%s" % ADDON_ID))
 ADDON_COLORS =      os.path.join(ADDON_DATA_PATH, "colors.db")
 #ADDON_SETTINGS =    os.path.join(ADDON_DATA_PATH, "settings.")
+Color =             namedtuple('Color', 'r g b')
+Gradient =          namedtuple('Gradient', 'start end')
+aa_amount =         4
+npoints =           100
+gname =             1
+scale =             1.25
+decluster =         False
+antialias =         True
+lines =             False
+line_color =        None
+vert_color =        None
+vert_radius =       0
+line_thickness =    0
+darken_amount =     0
+distribution =      'uniform'
+equilateral_tris =  False
+right_tris =        False
+imageSize =         64
 image_formats =     ['.jpg', '.jpeg', '.png', '.tif', '.bmp', 'gif', 'tiff']
 HOME =              xbmcgui.Window(10000)
 ONE_THIRD =         1.0/3.0
@@ -41,7 +61,7 @@ angle =             float(0)
 delta_x =           40
 delta_y =           90
 radius =            1
-pixelsize =         20
+pixelsize =         2
 blocksize =         64
 sigma =             0.05
 iterations =        1920
@@ -49,7 +69,7 @@ pthreshold =        100
 pclength =          50
 pangle =            00
 prandomness =       10
-lightsize =         192
+lightsize =         0
 black =             "#000000"
 white =             "#ffffff"
 bits =              1
@@ -66,6 +86,46 @@ color_comp =        "main:hls*0.33;0;0@hsv*0;-0.1;0.3" #[comp|main]:hls*-0.5;0.0
 color_main =        "main:" #[comp|main]:fhls*-;0.5;0.5@bump*[0-255] <- any amount of ops/any order, if no ops just use 'main:' or 'comp:'
 colors_dict =       {}
 shuffle_numbers =   ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+gradient = {
+    'sunshine': Gradient(
+        Color(255, 248, 9),
+        Color(255, 65, 9)
+    ),
+    'purples': Gradient(
+        Color(255, 9, 204),
+        Color(4, 137, 232)
+    ),
+    'grass': Gradient(
+        Color(255, 232, 38),
+        Color(88, 255, 38)
+    ),
+    'valentine': Gradient(
+        Color(102, 0, 85),
+        Color(255, 25, 216)
+    ),
+    'sky': Gradient(
+        Color(0, 177, 255),
+        Color(9, 74, 102)
+    ),
+    'ubuntu': Gradient(
+        Color(119, 41, 83),
+        Color(221, 72, 20)
+    ),
+    'fedora': Gradient(
+        Color(41, 65, 114),
+        Color(60, 110, 180)
+    ),
+    'debian': Gradient(
+        Color(215, 10, 83),
+        Color(10, 10, 10)
+    ),
+    'opensuse': Gradient(
+        Color(151, 208, 5),
+        Color(34, 120, 8)
+    )
+}
+def fnperlin(): return str(imageSize) + str(quality)
+def fndelaunay(): return str(lines) + str(scale) + str(npoints) + str(quality)
 def fnblur(): return str(radius) + str(quality)
 def fnpixelate(): return str(pixelsize) + str(quality)
 def fnshiftblock(): return str(blocksize) + str(sigma) + str(iterations) + str(quality)
@@ -88,14 +148,16 @@ def fnsharpness(): return str(sharp) + str(quality)
 def fnsplicer(): return str(min_stripes) + str(max_stripes) + str(orientation) + str(quality)
 def ColorBox_go_map(filterimage, imageops, gqual=0):
     if gqual == 0: gqual = quality
-    filename = hashlib.md5(filterimage).hexdigest() + str(blend) + '-'
+    filename = hashlib.md5(filterimage.encode('utf-8')).hexdigest() + str(blend) + '-'
     for cmarg in imageops.strip().split('-'):
         filename = filename + cmarg + ColorBox_filename_map[cmarg]()
     targetfile = os.path.join(ADDON_DATA_PATH, filename + '.png')
     Cache = Check_XBMC_Cache(targetfile)
-    if Cache != "": return Cache
+    if Cache != "":
+        return Cache
     Img = Check_XBMC_Internal(targetfile, filterimage)
-    if not Img: return
+    if not Img:
+        return
     try:
         img = Image.open(Img)
     except Exception as e:
@@ -126,6 +188,10 @@ def set_blursize(new_value):
     global radius
     radius = int(new_value)
     xbmc.executebuiltin('Skin.SetString(colorbox_blursize,'+str(new_value)+')')
+def set_npoints(new_value):
+    global npoints
+    npoints = int(new_value)
+    xbmc.executebuiltin('Skin.SetString(colorbox_npoints,'+str(new_value)+')')
 def set_bitsize(new_value):
     global bits
     bits = int(new_value)
@@ -160,18 +226,24 @@ def set_main(new_value):
     xbmc.executebuiltin('Skin.SetString(colorbox_main,'+str(new_value)+')')
 def set_desat(new_value):
     global desat
-    desat = int(new_value) / 100.0
+    desat = float(new_value)/ 100.0
     xbmc.executebuiltin('Skin.SetString(colorbox_desat,'+str(new_value)+')')
+    log("go_mapof bane1: %s ops" % (desat))
 def set_sharp(new_value):
     global sharp
-    sharp = int(new_value) / 100.0
+    sharp = float(new_value)/ 100.0
     xbmc.executebuiltin('Skin.SetString(colorbox_sharp,'+str(new_value)+')')
 def set_blend(new_value):
     global blend
-    blend = int(new_value) / 100.0
+    blend = float(new_value)/ 100.0
     xbmc.executebuiltin('Skin.SetString(colorbox_blend,'+str(new_value)+')')
+    log("go_mapof bane2: %s ops" % (blend))
 def dataglitch(img):
     return Dataglitch_Image(img)
+def perlin(img):
+    return Perlin_Image(img, 64)
+def delaunay(img):
+    return Delaunay_Image(img)
 def blur(img):
     imgfilter = MyGaussianBlur(radius=radius)
     img = img.filter(imgfilter)
@@ -186,12 +258,8 @@ def sharpness(img):
     return img
 def pixelate(img):
     return Pixelate_Image(img)
-def splicer(images_path):
-    images_path = xbmc.getInfoLabel('ListItem.Path')
-    images = get_all_images_from_the_input_dir(images_path)
-    return Splice_Images(images, MIN_STRIPES, MAX_STRIPES, orientation=ORIENTATION)
 def shiftblock(img):
-    qiterations = iterations / quality    
+    qiterations = iterations // quality
     return Shiftblock_Image(img, blocksize, sigma, qiterations)
 def pixelnone(img):
     return pixelshift(img, "none")
@@ -228,10 +296,89 @@ def angletone(img):
     return Angletone_Image(img, atsample, atscale, atpercentage, atangles)
 def dither(img):
     return Dither_Image(img)
+def Perlin_Image(img, imageSize=64):
+    noise = NoiseUtils(imageSize)
+    noise.makeTexture(texture = noise.cloud)
+    img = Image.new("L", (imageSize, imageSize))
+    pixels = img.load()
+    for i in range(0, imageSize):
+       for j in range(0, imageSize):
+            c = noise.img[i, j]
+            pixels[i, j] = c
+    return img
+def Delaunay_Image(img, ln_color=line_color):
+    background_image = img
+    size = background_image.size
+    if equilateral_tris:
+        points = generate_equilateral_points(npoints, size)
+    elif right_tris:
+        points = generate_rectangular_points(npoints, size)
+    else:
+        if distribution == 'uniform':
+            points = generate_random_points(npoints, size, scale, decluster)
+        elif distribution == 'halton':
+            points = generate_halton_points(npoints, size)
+    # Dedup the points
+    points = list(set(points))
+    # Calculate the triangulation
+    triangulation = delaunay_triangulation(points)
+    # Failed to find a triangulation
+    if not triangulation:
+        return
+    # Translate the points to screen coordinates
+    trans_triangulation = list(map(lambda x: cart_to_screen(x, size), triangulation))
+    # Assign colors to the triangles
+    if img:
+        colors = color_from_image(background_image, trans_triangulation)
+    else:
+        colors = color_from_gradient(gradient[gname], size, trans_triangulation)
+    # Darken random triangles
+    if darken_amount:
+        for i in range(0, len(colors)):
+            c = colors[i]
+            d = randrange(darken_amount)
+            darkened = Color(max(c.r-d, 0), max(c.g-d, 0), max(c.b-d, 0))
+            colors[i] = darkened
+    # Set up for anti-aliasing
+    if antialias:
+        # Scale the image dimensions
+        size = (size[0] * aa_amount, size[1] * aa_amount)
+        # Scale the graph
+        trans_triangulation = [
+            Triangle(
+                Point(t.a.x * aa_amount, t.a.y * aa_amount),
+                Point(t.b.x * aa_amount, t.b.y * aa_amount),
+                Point(t.c.x * aa_amount, t.c.y * aa_amount)
+            )
+            for t in trans_triangulation
+        ]
+    # Create image object
+    image = Image.new('RGB', size, 'white')
+    # Get a draw object
+    draw = ImageDraw.Draw(image)
+    # Draw the triangulation
+    draw_polys(draw, colors, trans_triangulation)
+    if lines or line_thickness or ln_color:
+        if ln_color is None:
+            ln_color = Color(255, 255, 255)
+        else:
+            ln_color = hex_to_color(ln_color)
+        draw_lines(draw, ln_color, trans_triangulation, line_thickness)
+    if points or vert_radius or vert_color:
+        if vert_color is None:
+            vertex_color = Color(255, 255, 255)
+        else:
+            vertex_color = hex_to_color(vert_color)
+        draw_points(draw, vertex_color, trans_triangulation, vert_radius)
+    # Resample the image using the built-in Lanczos filter
+    if antialias:
+        size = (int(size[0]//aa_amount), int(size[1]//aa_amount))
+        image = image.resize(size, Image.ANTIALIAS)
+    return image
 def Pixelate_Image(img):
     backgroundColor = (0,)*3
     image = img
-    image = image.resize((image.size[0]/pixelsize, image.size[1]/pixelsize), Image.NEAREST)
+    image = image.resize((image.size[0]//pixelsize, image.size[1]//pixelsize), Image.NEAREST)
     image = image.resize((image.size[0]*pixelsize, image.size[1]*pixelsize), Image.NEAREST)
     pixel = image.load()
     for i in range(0,image.size[0],pixelsize):
@@ -254,7 +401,7 @@ def Dataglitch_Image(img, channel='r'):
 def Shiftblock_Image(image, blocksize=64, sigma=1.05, iterations=300):
     seed = random.random()
     r = random.Random(seed)
-    for i in xrange(iterations):
+    for i in range(iterations):
         bx = int(r.uniform(0, image.size[0]-blocksize))
         by = int(r.uniform(0, image.size[1]-blocksize))
         block = image.crop((bx, by, bx+blocksize-1, by+blocksize-1))
@@ -309,7 +456,7 @@ def Halftone_Image(img):
             gray2 = (p2[0] * 0.299) + (p2[1] * 0.587) + (p2[2] * 0.114)
             gray3 = (p3[0] * 0.299) + (p3[1] * 0.587) + (p3[2] * 0.114)
             gray4 = (p4[0] * 0.299) + (p4[1] * 0.587) + (p4[2] * 0.114)
-            sat = (gray1 + gray2 + gray3 + gray4) / 4
+            sat = (gray1 + gray2 + gray3 + gray4) // 4
             if sat > 223:
                 hipixels[i, j]         = (255, 255, 255)
                 hipixels[i, j + 1]     = (255, 255, 255)
@@ -351,9 +498,9 @@ def Dither_Image(img):
             p2 = get_pixel(img, i, j + 1)
             p3 = get_pixel(img, i + 1, j)
             p4 = get_pixel(img, i + 1, j + 1)
-            red   = (p1[0] + p2[0] + p3[0] + p4[0]) / 4
-            green = (p1[1] + p2[1] + p3[1] + p4[1]) / 4
-            blue  = (p1[2] + p2[2] + p3[2] + p4[2]) / 4
+            red   = (p1[0] + p2[0] + p3[0] + p4[0]) // 4
+            green = (p1[1] + p2[1] + p3[1] + p4[1]) // 4
+            blue  = (p1[2] + p2[2] + p3[2] + p4[2]) // 4
             r = [0, 0, 0, 0]
             g = [0, 0, 0, 0]
             b = [0, 0, 0, 0]
@@ -386,14 +533,14 @@ def Splice_Images(images, min_stripes=20, max_stripes=200, orientation="verticle
         resized_images.append(resized_image)
     coords_list = []
     if orientation == "verticle":
-        split = range(0, int(w), int(int(w) / int(no_of_stripes)))
+        split = range(0, int(w), int(int(w) // int(no_of_stripes)))
         for coord in split:
-            stripe_coords = (coord, 0, int(coord + w / no_of_stripes), h)
+            stripe_coords = (coord, 0, int(coord + w // no_of_stripes), h)
             coords_list.append(stripe_coords)
     else: # horizontal
-        split = range(0, int(h), int(int(h) / int(no_of_stripes)))
+        split = range(0, int(h), int(int(h) // int(no_of_stripes)))
         for coord in split:
-            stripe_coords = (0, coord, w, int(coord + h / no_of_stripes))
+            stripe_coords = (0, coord, w, int(coord + h // no_of_stripes))
             coords_list.append(stripe_coords)
     for coords in coords_list:
         if random_coords:
@@ -418,12 +565,12 @@ def anglegcr(img, percentage):
         return cmyk_im
     cmyk_im = cmyk_im.split()
     cmyk = []
-    for i in xrange(4):
+    for i in range(4):
         cmyk.append(cmyk_im[i].load())
-    for x in xrange(img.size[0]):
-        for y in xrange(img.size[1]):
-            gray = min(cmyk[0][x,y], cmyk[1][x,y], cmyk[2][x,y]) * percentage / 100
-            for i in xrange(3):
+    for x in range(img.size[0]):
+        for y in range(img.size[1]):
+            gray = min(cmyk[0][x,y], cmyk[1][x,y], cmyk[2][x,y]) * percentage // 100
+            for i in range(3):
                 cmyk[i][x,y] = cmyk[i][x,y] - gray
             cmyk[3][x,y] = gray
     return Image.merge('CMYK', cmyk_im)
@@ -435,19 +582,19 @@ def anglehalftone(img, cmyk, sample, scale, angles):
         size = channel.size[0]*scale, channel.size[1]*scale
         half_tone = Image.new('L', size)
         draw = ImageDraw.Draw(half_tone)
-        for x in xrange(0, channel.size[0], sample):
-            for y in xrange(0, channel.size[1], sample):
+        for x in range(0, channel.size[0], sample):
+            for y in range(0, channel.size[1], sample):
                 box = channel.crop((x, y, x + sample, y + sample))
                 stat = ImageStat.Stat(box)
-                diameter = (stat.mean[0] / 255)**0.5
+                diameter = (stat.mean[0] // 255)**0.5
                 edge = 0.5*(1-diameter)
                 x_pos, y_pos = (x+edge)*scale, (y+edge)*scale
                 box_edge = sample*diameter*scale
                 draw.ellipse((x_pos, y_pos, x_pos + box_edge, y_pos + box_edge), fill=255)
         half_tone = half_tone.rotate(-angle, expand=1)
         width_half, height_half = half_tone.size
-        xx=(width_half-img.size[0]*scale) / 2
-        yy=(height_half-img.size[1]*scale) / 2
+        xx=(width_half-img.size[0]*scale) // 2
+        yy=(height_half-img.size[1]*scale) // 2
         half_tone = half_tone.crop((xx, yy, xx + img.size[0]*scale, yy + img.size[1]*scale))
         dots.append(half_tone)
     return dots
@@ -625,9 +772,9 @@ def image_posterize(img, bits=1):
     return ImageOps.posterize(img, bits)
 def fake_light(img, tilesize=50):
     WIDTH, HEIGHT = img.size
-    for x in xrange(0, WIDTH, tilesize):
-        for y in xrange(0, HEIGHT, tilesize):
-            br = int(255 * (1 - x / float(WIDTH) * y / float(HEIGHT)))
+    for x in range(0, WIDTH, tilesize):
+        for y in range(0, HEIGHT, tilesize):
+            br = int(255 * (1 - x // float(WIDTH) * y // float(HEIGHT)))
             tile = Image.new('RGB', (tilesize, tilesize), (255,255,255,128))
             img.paste((br,br,br), (x, y, x + tilesize, y + tilesize), mask=tile)
     return img
@@ -639,8 +786,8 @@ def image_distort(img, delta_x=50, delta_y=90):
     pix=[0, 0]
     for x in range(WIDTH):
         for y in range(HEIGHT):
-            x_shift, y_shift =  ( int(abs(math.sin(x) * WIDTH / delta_x)) ,
-                                  int(abs(math.tan(math.sin(y))) * HEIGHT / delta_y))
+            x_shift, y_shift =  ( int(abs(math.sin(x) * WIDTH // delta_x)) ,
+                                  int(abs(math.tan(math.sin(y))) * HEIGHT // delta_y))
             if x + x_shift < WIDTH:
                 pix[0] = x + x_shift
             else:
@@ -685,12 +832,12 @@ def Show_Percentage():
         stot = int(xbmc.getInfoLabel('ListItem.Property(TotalEpisodes)'))
         wtot = int(xbmc.getInfoLabel('ListItem.Property(WatchedEpisodes)'))
         getcontext().prec = 6
-        perc = "{:.0f}".format(100 / Decimal(stot) * Decimal(wtot))
+        perc = "{:.0f}".format(100 // Decimal(stot) * Decimal(wtot))
         HOME.setProperty("Show_Percentage", perc)
     except:
         return
 def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='ffffffff'):
-    md5 = hashlib.md5(filterimage).hexdigest()
+    md5 = hashlib.md5(filterimage.encode('utf-8')).hexdigest()
     var3 = 'Old' + cname
     var4 = 'Old' + ccname
     if not colors_dict: Load_Colors_Dict()
@@ -710,8 +857,8 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
     else:
         maincolor, cmaincolor = colors_dict[md5].split(':')
     Black_White(maincolor, cname)
-    cimagecolor = Color_Modify(maincolor, cmaincolor, color_comp)
-    imagecolor = Color_Modify(maincolor, cmaincolor, color_main)
+    cimagecolor = cmaincolor
+    imagecolor = maincolor
     tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], lgsteps, lgint, var3))
     tmc.start()
     tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], lgsteps, lgint, var4))
@@ -720,7 +867,7 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
     #linear_gradient(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], 50, 10, var4)
     return imagecolor, cimagecolor
 def Color_Only_Manual(filterimage, cname, imagecolor='ff000000', cimagecolor='ffffffff'):
-    md5 = hashlib.md5(filterimage).hexdigest()
+    md5 = hashlib.md5(filterimage.encode('utf-8')).hexdigest()
     if not colors_dict: Load_Colors_Dict()
     if md5 not in colors_dict:
         filename = md5 + ".png"
@@ -775,7 +922,10 @@ def Random_Color():
     return "ff" + "%06x" % random.randint(0, 0xFFFFFF)
 def Complementary_Color(hex_color):
     irgb = [hex_color[2:4], hex_color[4:6], hex_color[6:8]]
-    hls = rgb_to_hls(int(irgb[0], 16)/255., int(irgb[1], 16)/255., int(irgb[2], 16)/255.)
+    hls0 = round(int(irgb[0], 16)/255, 1)
+    hls1 = round(int(irgb[1], 16)/255, 1)
+    hls2 = round(int(irgb[2], 16)/255, 1)
+    hls = rgb_to_hls(hls0, hls1, hls2)
     hls = hls_to_rgb(one_max_loop(hls[0]+0.5), hls[1], hls[2])
     return RGB_to_hex(hls)
 def Black_White(hex_color, prop):
@@ -812,17 +962,17 @@ def rgb_to_hsv(r, g, b):
     v = maxc
     if minc == maxc:
         return 0.0, 0.0, v
-    s = (maxc-minc) / maxc
-    rc = (maxc-r) / (maxc-minc)
-    gc = (maxc-g) / (maxc-minc)
-    bc = (maxc-b) / (maxc-minc)
+    s = (maxc-minc) // maxc
+    rc = (maxc-r) // (maxc-minc)
+    gc = (maxc-g) // (maxc-minc)
+    bc = (maxc-b) // (maxc-minc)
     if r == maxc:
         h = bc-gc
     elif g == maxc:
         h = 2.0+rc-bc
     else:
         h = 4.0+gc-rc
-    h = (h/6.0) % 1.0
+    h = (h//6.0) % 1.0
     return h, s, v
 def hsv_to_rgb(h, s, v):
     if s == 0.0: v*=255; return (int(v), int(v), int(v))
@@ -837,23 +987,28 @@ def hsv_to_rgb(h, s, v):
 def rgb_to_hls(r, g, b):
     maxc = max(r, g, b)
     minc = min(r, g, b)
-    l = (minc+maxc)/2.0
+    l1 = (minc+maxc)/2.0
+    l = round(l1, 1)
     if minc == maxc:
         return 0.0, l, 0.0
     if l <= 0.5:
-        s = (maxc-minc) / (maxc+minc)
+        s1 = (maxc-minc) / (maxc+minc)
+        s = round(s1, 1)
     else:
-        s = (maxc-minc) / (2.0-maxc-minc)
-    rc = (maxc-r) / (maxc-minc)
-    gc = (maxc-g) / (maxc-minc)
-    bc = (maxc-b) / (maxc-minc)
+        s2 = (maxc-minc) / (2.0-maxc-minc)
+        s = round(s2, 1)
+    rc = round((maxc-r) / (maxc-minc), 1)
+    gc = round((maxc-g) / (maxc-minc), 1)
+    bc = round((maxc-b) / (maxc-minc), 1)
+    
     if r == maxc:
-        h = bc-gc
+        h1 = bc-gc
     elif g == maxc:
-        h = 2.0+rc-bc
+        h1 = 2.0+rc-bc
     else:
-        h = 4.0+gc-rc
-    h = (h/6.0) % 1.0
+        h1 = 4.0+gc-rc
+    h = (h1/6.0) % 1.0
+    h = round(h, 1)
     return h, l, s
 def hls_to_rgb(h, l, s):
     if s == 0.0:
@@ -873,6 +1028,192 @@ def _v(m1, m2, hue):
     if hue < TWO_THIRD:
         return m1 + (m2-m1)*(TWO_THIRD-hue)*6.0
     return m1
+def hex_to_color(hex_value):
+    """
+    Convert a hexadecimal representation of a color to an RGB triplet.
+
+    For example, the hex value FFFFFF corresponds to (255, 255, 255).
+
+    Arguments:
+    hex_value is a string containing a 6-digit hexadecimal color
+
+    Returns:
+    A Color object equivalent to the given hex value or None for invalid input
+    """
+    if hex_value is None:
+        return None
+
+    if hex_value[0] == '#':
+        hex_value = hex_value[1:]
+
+    hex_value = hex_value.lower()
+
+    red = hex_value[:2]
+    green = hex_value[2:4]
+    blue = hex_value[4:]
+
+    try:
+        return Color(int(red, 16), int(green, 16), int(blue, 16))
+    except ValueError:
+        return None
+
+
+def cart_to_screen(points, size):
+    """
+    Convert Cartesian coordinates to screen coordinates.
+
+    Arguments:
+    points is a list of Point objects or a vertex-defined Triangle object
+    size is a 2-tuple of the screen dimensions (width, height)
+
+    Returns:
+    A list of Point objects or a Triangle object, depending on the type of the input
+    """
+    if isinstance(points, Triangle):
+        return Triangle(
+            Point(points.a.x, size[1] - points.a.y),
+            Point(points.b.x, size[1] - points.b.y),
+            Point(points.c.x, size[1] - points.c.y)
+        )
+    else:
+        trans_points = [Point(p.x, size[1] - p.y) for p in points]
+        return trans_points
+
+
+def calculate_color(grad, val):
+    """
+    Calculate a point on a color gradient. Color values are in [0, 255].
+
+    Arguments:
+    grad is a Gradient object
+    val is a value in [0, 1] indicating where the color is on the gradient
+
+    Returns:
+    A Color object
+    """
+    slope_r = grad.end.r - grad.start.r
+    slope_g = grad.end.g - grad.start.g
+    slope_b = grad.end.b - grad.start.b
+
+    r = int(grad.start.r + slope_r*val)
+    g = int(grad.start.g + slope_g*val)
+    b = int(grad.start.b + slope_b*val)
+
+    # Perform thresholding
+    r = min(max(r, 0), 255)
+    g = min(max(g, 0), 255)
+    b = min(max(b, 0), 255)
+
+    return Color(r, g, b)
+
+
+def draw_polys(draw, colors, polys):
+    """
+    Draw a set of polygons to the screen using the given colors.
+
+    Arguments:
+    colors is a list of Color objects, one per polygon
+    polys is a list of polygons defined by their vertices as x, y coordinates
+    """
+    for i in range(0, len(polys)):
+        draw.polygon(polys[i], fill=colors[i])
+
+
+def draw_lines(draw, color, polys, line_thickness=1):
+    """
+    Draw the edges of the given polygons to the screen in the given color.
+
+    Arguments:
+    draw is an ImageDraw object
+    color is a Color tuple
+    polys is a list of vertices
+    line_thickness is the thickness of each line in px (default 1)
+    """
+    if line_thickness is None:
+        line_thickness = 1
+
+    for p in polys:
+        draw.line(p, color, line_thickness)
+
+
+def draw_points(draw, color, polys, vert_radius=16):
+    """
+    Draw the vertices of the given polygons to the screen in the given color.
+
+    Arguments:
+    draw is an ImageDraw object
+    color is a Color tuple
+    polys is a list of vertices
+    vert_radius is the radius of each vertex in px (default 16)
+    """
+    if vert_radius is None:
+        vert_radius = 16
+
+    for p in polys:
+        v1 = [p[0].x - vert_radius//2, p[0].y - vert_radius//2, p[0].x + vert_radius//2, p[0].y + vert_radius//2]
+        v2 = [p[1].x - vert_radius//2, p[1].y - vert_radius//2, p[1].x + vert_radius//2, p[1].y + vert_radius//2]
+        v3 = [p[2].x - vert_radius//2, p[2].y - vert_radius//2, p[2].x + vert_radius//2, p[2].y + vert_radius//2]
+        draw.ellipse(v1, color)
+        draw.ellipse(v2, color)
+        draw.ellipse(v3, color)
+
+
+def color_from_image(background_image, triangles):
+    """
+    Color a graph of triangles using the colors from an image.
+
+    The color of each triangle is determined by the color of the image pixel at
+    its centroid.
+
+    Arguments:
+    background_image is a PIL Image object
+    triangles is a list of vertex-defined Triangle objects
+
+    Returns:
+    A list of Color objects, one per triangle such that colors[i] is the color
+    of triangle[i]
+    """
+    colors = []
+    pixels = background_image.load()
+    size = background_image.size
+    for t in triangles:
+        centroid = tri_centroid(t)
+        # Truncate the coordinates to fit within the boundaries of the image
+        int_centroid = (
+            int(min(max(centroid[0], 0), size[0]-1)),
+            int(min(max(centroid[1], 0), size[1]-1))
+        )
+        # Get the color of the image at the centroid
+        p = pixels[int_centroid[0], int_centroid[1]]
+        colors.append(Color(p[0], p[1], p[2]))
+    return colors
+
+
+def color_from_gradient(gradient, image_size, triangles):
+    """
+    Color a graph of triangles using a gradient.
+
+    Arguments:
+    gradient is a Gradient object
+    image_size is a tuple of the output dimensions, i.e. (width, height)
+    triangles is a list of vertex-defined Triangle objects
+
+    Returns:
+    A list of Color objects, one per triangle such that colors[i] is the color
+    of triangle[i]
+    """
+    colors = []
+    # The size of the screen
+    s = sqrt(image_size[0]**2+image_size[1]**2)
+    for t in triangles:
+        # The color is determined by the location of the centroid
+        tc = tri_centroid(t)
+        # Bound centroid to boundaries of the image
+        c = (min(max(0, tc[0]), image_size[0]),
+             min(max(0, tc[1]), image_size[1]))
+        frac = sqrt(c[0]**2+c[1]**2)//s
+        colors.append(calculate_color(gradient, frac))
+    return colors
 def one_max_loop(oml):
     if abs(oml) > 1.0:
         return abs(oml) - 1.0
@@ -891,7 +1232,7 @@ def Get_Colors(img, md5):
             values = []
             for pixel in pixels:
                 values.append(pixel)
-            colour_tuple[channel] = clamp(sum(values) / len(values))
+            colour_tuple[channel] = clamp(sum(values) // len(values))
         imagecolor = 'ff%02x%02x%02x' % tuple(colour_tuple)
         cimagecolor = Complementary_Color(imagecolor)
         Write_Colors_Dict(md5,imagecolor,cimagecolor)
@@ -904,13 +1245,13 @@ def Check_XBMC_Internal(targetfile, filterimage):
     xbmc_cache_filep = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
     xbmc_cache_filej = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".png")
     if xbmcvfs.exists(xbmc_cache_filej):
-        return xbmc.translatePath(xbmc_cache_filej)
+        return xbmcvfs.translatePath(xbmc_cache_filej)
     elif xbmcvfs.exists(xbmc_cache_filep):
-        return xbmc.translatePath(xbmc_cache_filep)
+        return xbmcvfs.translatePath(xbmc_cache_filep)
     elif xbmcvfs.exists(xbmc_vid_cache_file):
-        return xbmc.translatePath(xbmc_vid_cache_file)
+        return xbmcvfs.translatePath(xbmc_vid_cache_file)
     else:
-        filterimage = urllib.unquote(filterimage.replace("image://", "")).decode('utf8')
+        filterimage = Remove_Quotes(filterimage.replace("image://", ""))
         if filterimage.endswith("/"):
             filterimage = filterimage[:-1]
         xbmcvfs.copy(filterimage, targetfile)
@@ -922,11 +1263,11 @@ def Check_XBMC_Cache(targetfile):
     xbmc_cache_filep = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".jpg")
     xbmc_cache_filej = os.path.join("special://profile/Thumbnails/", cachedthumb[0], cachedthumb[:-4] + ".png")
     if xbmcvfs.exists(xbmc_cache_filej):
-        return xbmc.translatePath(xbmc_cache_filej)
+        return xbmcvfs.translatePath(xbmc_cache_filej)
     elif xbmcvfs.exists(xbmc_cache_filep):
-        return xbmc.translatePath(xbmc_cache_filep)
+        return xbmcvfs.translatePath(xbmc_cache_filep)
     elif xbmcvfs.exists(xbmc_vid_cache_file):
-        return xbmc.translatePath(xbmc_vid_cache_file)
+        return xbmcvfs.translatePath(xbmc_vid_cache_file)
     if xbmcvfs.exists(targetfile):
         return targetfile
     return ""
@@ -940,8 +1281,8 @@ def Get_Frequent_Color(img):
     return 'ff%02x%02x%02x' % tuple(most_frequent_pixel[1])
 def Resize_Image(img, scale):
     width, height = img.size
-    qwidth = width / scale
-    qheight = height / scale
+    qwidth = width // scale
+    qheight = height // scale
     if qwidth % 2 != 0:
         qwidth += 1
     if qheight % 2 != 0:
@@ -964,14 +1305,19 @@ def Write_Colors_Dict(md5,imagecolor,cimagecolor):
     with open(ADDON_COLORS, 'w') as file:
         for id, values in colors_dict.items():
             file.write(':'.join([id] + values.split(':')) + '\n')
-def log(txt):
-    if isinstance(txt, str):
-        txt = txt.decode("utf-8")
-    message = u'%s: %s' % (ADDON_ID, txt)
-    xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGNOTICE)
+def log(txt, loglevel=xbmc.LOGDEBUG):
+    """log message to kodi logfile"""
+    if sys.version_info.major < 3:
+        if isinstance(txt, unicode):
+            txt = txt.encode('utf-8')
+    if loglevel == xbmc.LOGDEBUG:
+        loglevel = xbmc.LOGINFO
+    xbmc.log("%s --> %s" % (ADDON_ID, txt), level=loglevel)
 def prettyprint(string):
     log(simplejson.dumps(string, sort_keys=True, indent=4, separators=(',', ': ')))
 ColorBox_filename_map = {
+        'perlin':       fnperlin,
+        'delaunay':     fndelaunay,
         'blur':         fnblur,
         'pixelate':     fnpixelate,
         'shiftblock':   fnshiftblock,
@@ -990,9 +1336,10 @@ ColorBox_filename_map = {
         'dither':       fndither,
         'desaturate':   fndesaturate,
         'sharpness':    fnsharpness,
-        'splicer':      fnsplicer,
         'dataglitch':   fndataglitch}
 ColorBox_function_map = {
+        'perlin':       perlin,
+        'delaunay':     delaunay,
         'blur':         blur,
         'pixelate':     pixelate,
         'shiftblock':   shiftblock,
@@ -1011,5 +1358,14 @@ ColorBox_function_map = {
         'dither':       dither,
         'desaturate':   desaturate,
         'sharpness':    sharpness,
-        'splicer':      splicer,
         'dataglitch':   dataglitch}
+ 
+def try_encode(text, encoding="utf-8"):
+    '''helper to encode a string to utf-8'''
+    if sys.version_info.major == 3:
+        return text
+    else:
+        try:
+            return text.encode(encoding, "ignore")
+        except Exception:
+            return text
