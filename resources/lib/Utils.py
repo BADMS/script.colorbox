@@ -857,8 +857,8 @@ def Color_Only(filterimage, cname, ccname, imagecolor='ff000000', cimagecolor='f
     else:
         maincolor, cmaincolor = colors_dict[md5].split(':')
     Black_White(maincolor, cname)
-    cimagecolor = cmaincolor
-    imagecolor = maincolor
+    imagecolor = Color_Modify(maincolor, cmaincolor, color_main)
+    cimagecolor = Color_Modify(maincolor, cmaincolor, color_comp)
     tmc = Thread(target=linear_gradient, args=(cname, HOME.getProperty(var3)[2:8], imagecolor[2:8], lgsteps, lgint, var3))
     tmc.start()
     tmcc = Thread(target=linear_gradient, args=(ccname, HOME.getProperty(var4)[2:8], cimagecolor[2:8], lgsteps, lgint, var4))
