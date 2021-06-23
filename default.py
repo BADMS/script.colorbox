@@ -158,7 +158,7 @@ class ColorBoxMain:
                         elif var != "":
                             ColorBox_settings_map[var](set)
                 except Exception as e:
-                    utils.log("9err: %s img: %s" % (e,Daemon_NINE_ImageUpdating))
+                    utils.log("9err: %s img: %s" % (e,self.prefix_prev_NINE))
             if self.ColorBox_multis != []:
                 for line in self.ColorBox_multis:
                     self.wpnam, self.mfx, self.mqual = line.strip().split(':')
