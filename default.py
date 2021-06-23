@@ -123,43 +123,42 @@ class ColorBoxMain:
                         tm4 = Thread(target=utils.Color_Only, args=(self.image_now_EIGHT, "ImageColorEIGHT", "ImageCColorEIGHT"))
                         tm4.start()
                     HOME.setProperty('Daemon_EIGHT_ImageUpdating', '')
-            self.manual_set_NINE = HOME.getProperty("NINE_manual_set")
-            if (self.manual_set_NINE != '' and self.manual_set_NINE != self.prefix_prev_NINE) or HOME.getProperty("NINE_daemon_fire"):
-                HOME.setProperty('Daemon_NINE_ImageUpdating', self.manual_set_NINE)
+            NINE_manual_set = HOME.getProperty("NINE_manual_set")
+            if (NINE_manual_set != '' and NINE_manual_set != self.prefix_prev_NINE) or HOME.getProperty("NINE_daemon_fire"):
+                HOME.setProperty('NINE_manual_set', '')
                 try:
                     HOME.clearProperty("NINE_daemon_fire")
-                    self.prefix_prev_NINE = self.manual_set_NINE
-                    self.info = ""
-                    self.id = ""
-                    self.set = ""
-                    self.var = ""
-                    self.prefix = ""
-                    for larg in self.manual_set_NINE.strip().split('|'):
+                    self.prefix_prev_NINE = NINE_manual_set
+                    info = ""
+                    id = ""
+                    set = ""
+                    var = ""
+                    prefix = ""
+                    for larg in self.prefix_prev_NINE.strip().split('|'):
                         for arg in larg.strip().split(','):
                             arg = arg.replace('"', "")
                             if arg.startswith('info='):
-                                self.info = utils.Remove_Quotes(arg[5:])
+                                info = utils.Remove_Quotes(arg[5:])
                             elif arg.startswith('id='):
-                                self.id = utils.Remove_Quotes(arg[3:])
+                                id = utils.Remove_Quotes(arg[3:])
                             elif arg.startswith('set='):
-                                self.set = utils.Remove_Quotes(arg[4:])
+                                set = utils.Remove_Quotes(arg[4:])
                             elif arg.startswith('var='):
-                                self.var = utils.Remove_Quotes(arg[4:])
+                                var = utils.Remove_Quotes(arg[4:])
                             elif arg.startswith('prefix='):
-                                self.prefix = arg[7:]
-                                if not self.prefix.endswith("."):
-                                    self.prefix = self.prefix + "."
-                        if self.info != "":
-                            HOME.setProperty(self.prefix + 'ImageFilterNINE', utils.ColorBox_go_map(self.id, self.info))
-                            HOME.setProperty(self.prefix + "ImageNINE", self.id)
-                            imagecolor, cimagecolor = utils.Color_Only_Manual(self.id, self.prefix + "ImageColorNINE")
-                            HOME.setProperty(self.prefix + "ImageColorNINE", imagecolor)
-                            HOME.setProperty(self.prefix + "ImageCColorNINE", cimagecolor)
-                        elif self.var != "":
-                            ColorBox_settings_map[self.var](self.set)
+                                prefix = arg[7:]
+                                if not prefix.endswith("."):
+                                    prefix = prefix + "."
+                        if info != "":
+                            HOME.setProperty(prefix + 'ImageFilterNINE', utils.ColorBox_go_map(id, info))
+                            HOME.setProperty(prefix + "ImageNINE", id)
+                            imagecolor, cimagecolor = utils.Color_Only_Manual(id, prefix + "ImageColorNINE")
+                            HOME.setProperty(prefix + "ImageColorNINE", imagecolor)
+                            HOME.setProperty(prefix + "ImageCColorNINE", cimagecolor)
+                        elif var != "":
+                            ColorBox_settings_map[var](set)
                 except Exception as e:
-                    utils.log("9err: %s img: %s" % (e,self.manual_set_NINE))
-                HOME.setProperty('Daemon_NINE_ImageUpdating', '')
+                    utils.log("9err: %s img: %s" % (e,Daemon_NINE_ImageUpdating))
             if self.ColorBox_multis != []:
                 for line in self.ColorBox_multis:
                     self.wpnam, self.mfx, self.mqual = line.strip().split(':')
